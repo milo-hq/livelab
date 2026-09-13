@@ -35,6 +35,8 @@ OBS/手机   RTMP/SRT/WHIP    就近 PoP        ABR 阶梯、切片        HLS/L
 
 数据来源见附录 01（Mux、SRS、Cloudflare、MediaMTX 生产基准）。
 
+<!-- widget:protocols -->
+
 ### 为什么 LL-HLS 现在是"默认答案"
 
 1. **iOS 原生支持**：不需要 JS 播放器就能 2–4s，AirPlay/画中画完整。

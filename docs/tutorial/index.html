@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>LiveLab 直播前端手册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>/* LiveLab handbook — tokens first: light on bare :root, dark via system + explicit stamp. */
+:root {
+  --bg: #f6f3ec;
+  --bg-2: #ecE8df;
+  --bg-3: #e3ded3;
+  --fg: #1d1b18;
+  --muted: #6d675d;
+  --line: #d8d2c6;
+  --accent: #c63a2b;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e1dd;
+  --teal: #1e7c6e;
+  --teal-soft: #dcefe9;
+  --code-bg: #efebe2;
+  --mark: #fbe9e5;
+  --shadow: 0 1px 0 rgba(0,0,0,.04), 0 8px 24px rgba(40,30,20,.06);
+  --sans: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --measure: 66ch;
+  --toc-w: 272px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517; --bg-2: #1b1d20; --bg-3: #24272b; --fg: #e9e6df; --muted: #9c978c; --line: #2d3036;
+    --accent: #e6503d; --accent-ink: #ffffff; --accent-soft: #3a1f1b; --teal: #43b59f; --teal-soft: #17302b;
+    --code-bg: #1b1d20; --mark: #2b1e1c; --shadow: 0 1px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141517; --bg-2: #1b1d20; --bg-3: #24272b; --fg: #e9e6df; --muted: #9c978c; --line: #2d3036;
+  --accent: #e6503d; --accent-ink: #ffffff; --accent-soft: #3a1f1b; --teal: #43b59f; --teal-soft: #17302b;
+  --code-bg: #1b1d20; --mark: #2b1e1c; --shadow: 0 1px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--sans); font-size: 16px; line-height: 1.75;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+a { color: inherit; text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent); text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+
+/* progress + top bar */
+.progress { position: fixed; inset: 0 auto auto 0; height: 3px; width: 0; background: var(--accent); z-index: 30; transition: width .15s linear; }
+.topbar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px;
+  height: 52px; padding: 0 16px; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; text-decoration: none; letter-spacing: -.01em; }
+.brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.topbar-meta { margin-left: auto; font-size: 12px; color: var(--muted); }
+.menu { display: none; align-items: center; gap: 8px; font: inherit; font-size: 14px; background: none; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; color: var(--fg); cursor: pointer; }
+.menu span { width: 14px; height: 2px; background: currentColor; box-shadow: 0 -4px 0 currentColor, 0 4px 0 currentColor; display: inline-block; }
+
+/* shell */
+.shell { display: grid; grid-template-columns: var(--toc-w) minmax(0, 1fr); gap: 0; max-width: 1280px; margin: 0 auto; }
+.toc { position: sticky; top: 52px; align-self: start; height: calc(100dvh - 52px); overflow-y: auto; padding: 18px 12px 40px 16px; border-right: 1px solid var(--line); font-size: 13.5px; scrollbar-width: thin; }
+.toc-search input { width: 100%; font: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-2); color: var(--fg); }
+.toc-list { list-style: none; margin: 14px 0 0; padding: 0; }
+.toc-list > li { margin: 2px 0; }
+.toc-list > li > a { display: grid; grid-template-columns: 26px 1fr 16px; align-items: baseline; gap: 6px; padding: 6px 8px; border-radius: 6px; text-decoration: none; }
+.toc-list > li > a .mono { font-size: 11.5px; color: var(--muted); }
+.toc-list > li > a .done { color: var(--teal); opacity: 0; font-size: 12px; }
+.toc-list > li.is-read > a .done { opacity: 1; }
+.toc-list > li.is-active > a { background: var(--bg-2); color: var(--accent); }
+.toc-list > li > a:hover { background: var(--bg-2); }
+.toc-list ul { list-style: none; margin: 0 0 4px 32px; padding: 0; display: none; }
+.toc-list > li.is-active ul, .toc.is-searching .toc-list ul { display: block; }
+.toc-list ul a { display: block; padding: 3px 8px; font-size: 12.5px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.toc-list ul a:hover { color: var(--fg); border-left-color: var(--line); }
+.toc .is-hidden { display: none !important; }
+.toc-appendix { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.toc-appendix .toc-list { margin-top: 8px; }
+
+/* content */
+.content { min-width: 0; padding: 0 24px 80px; }
+.cover { padding: 56px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.cover-title { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.25; letter-spacing: -.02em; margin: 10px 0 14px; text-wrap: balance; max-width: 26ch; }
+.lede { max-width: var(--measure); font-size: 17px; color: var(--fg); }
+.cover-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0 14px; max-width: 720px; }
+.cover-facts div { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: var(--bg-2); border-radius: 8px; }
+.cover-facts .big { font-size: 22px; font-weight: 600; color: var(--accent); }
+.cover-facts span:last-child { font-size: 12.5px; color: var(--muted); }
+.cover-note { font-size: 13px; color: var(--muted); max-width: var(--measure); }
+
+.chapter { padding: 44px 0 24px; border-bottom: 1px solid var(--line); }
+.chapter-head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 12px; margin-bottom: 18px; }
+.chapter-head .eyebrow { grid-column: 1 / -1; }
+.chapter-head h1 { font-size: clamp(24px, 2.6vw, 32px); line-height: 1.25; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.mark-read { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.mark-read input { accent-color: var(--teal); }
+.chapter-nav { display: flex; justify-content: space-between; gap: 16px; margin-top: 32px; font-size: 14px; }
+.chapter-nav a { text-decoration: none; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; max-width: 48%; }
+.chapter-nav a:hover { border-color: var(--accent); }
+.appendix details > summary { cursor: pointer; font-weight: 500; color: var(--accent); padding: 8px 0; }
+
+/* prose */
+.prose { max-width: var(--measure); }
+.prose h2 { font-size: 21px; line-height: 1.3; letter-spacing: -.01em; margin: 40px 0 12px; padding-top: 8px; text-wrap: balance; }
+.prose h2::before { content: ""; display: block; width: 28px; height: 3px; background: var(--accent); margin-bottom: 12px; border-radius: 2px; }
+.prose h3 { font-size: 17px; margin: 28px 0 8px; }
+.prose h4 { font-size: 15.5px; margin: 20px 0 6px; }
+.prose p, .prose ul, .prose ol { margin: 0 0 14px; }
+.prose li { margin: 4px 0; }
+.prose li p { margin: 0; }
+.prose strong { font-weight: 600; }
+.prose code { font-family: var(--mono); font-size: .86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+.prose blockquote { margin: 16px 0; padding: 8px 16px; border-left: 3px solid var(--teal); background: var(--teal-soft); border-radius: 0 6px 6px 0; }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.prose input[type="checkbox"] { accent-color: var(--teal); margin-right: 6px; }
+.prose img { max-width: 100%; }
+
+.table-wrap { overflow-x: auto; margin: 14px 0 18px; border: 1px solid var(--line); border-radius: 8px; max-width: 100%; }
+.prose .table-wrap { max-width: min(100%, 900px); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.5; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+th { background: var(--bg-2); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+
+figure.code { margin: 14px 0 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); overflow: hidden; max-width: min(100%, 900px); }
+.code-bar { display: flex; justify-content: space-between; align-items: center; padding: 4px 10px; font-family: var(--mono); font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--bg-2); }
+.copy { font: inherit; font-family: var(--mono); font-size: 11px; background: none; border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; color: var(--muted); cursor: pointer; }
+.copy:hover { color: var(--fg); border-color: var(--fg); }
+figure.code pre { margin: 0; padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; tab-size: 2; }
+figure.code code { background: none; padding: 0; font-size: inherit; }
+figure.code[data-lang="diagram"] pre { font-size: 12px; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in { color: var(--accent); }
+.hljs-string, .hljs-attr, .hljs-symbol, .hljs-bullet { color: var(--teal); }
+.hljs-number { color: #a05a1c; }
+:root[data-theme="dark"] .hljs-number { color: #e0a463; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hljs-number { color: #e0a463; } }
+.hljs-comment, .hljs-meta { color: var(--muted); font-style: italic; }
+.hljs-title, .hljs-function .hljs-title, .hljs-type { color: var(--fg); font-weight: 600; }
+
+/* widgets */
+.widget { margin: 20px 0 26px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); box-shadow: var(--shadow); max-width: min(100%, 900px); }
+.widget-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 12px; }
+.widget-note { font-size: 12.5px; color: var(--muted); }
+.proto-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.proto { font: inherit; font-size: 13.5px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.proto.is-on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.axis { margin: 16px 0 10px; }
+.axis-ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.axis-bar { position: relative; height: 14px; border-radius: 7px; background: var(--bg-3); overflow: hidden; margin-top: 4px; }
+.axis-range { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, var(--teal), var(--accent)); border-radius: 7px; transition: left .25s, width .25s; }
+.proto-facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; font-size: 13.5px; }
+.proto-facts dt { color: var(--muted); }
+.proto-facts dd { margin: 0; }
+.cost-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.cost-inputs label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.cost-inputs input { font: inherit; font-family: var(--mono); font-size: 14px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+.cost-table td:nth-child(3), .cost-table td:nth-child(4) { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cost-table td:nth-child(4) { font-weight: 600; }
+
+.colophon { margin-top: 40px; font-size: 12.5px; color: var(--muted); }
+
+/* mobile */
+@media (max-width: 960px) {
+  .shell { grid-template-columns: 1fr; }
+  .menu { display: inline-flex; }
+  .topbar-meta { display: none; }
+  .toc { position: fixed; top: 52px; left: 0; bottom: 0; width: min(86vw, 340px); background: var(--bg); transform: translateX(-104%); transition: transform .2s ease; z-index: 25; box-shadow: var(--shadow); height: auto; }
+  .toc.is-open { transform: none; }
+  .content { padding: 0 16px 60px; }
+  .cover { padding-top: 28px; }
+  .cover-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chapter-head { grid-template-columns: 1fr; }
+  .chapter-nav { flex-direction: column; }
+  .chapter-nav a { max-width: none; }
+  body { font-size: 15.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .toc, .axis-range, .progress { transition: none; } }
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<header class="topbar">
+  <button class="menu" id="menu" type="button" aria-controls="toc" aria-expanded="false"><span></span>目录</button>
+  <a class="brand" href="#top"><span class="dot"></span>LiveLab 直播前端手册</a>
+  <span class="topbar-meta mono">14 章 · 4 份调研 · 2026-09</span>
+</header>
+<div class="shell" id="top">
+  
+<nav class="toc" id="toc" aria-label="目录">
+  <div class="toc-search"><input type="search" id="search" placeholder="搜索章节 / 小节…" autocomplete="off"></div>
+  <ol class="toc-list">
+    <li data-ch="ch00"><a href="#ch00"><span class="mono">00</span><span class="toc-title">导读：这份教程要带你做成什么</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch00-目标画像">目标画像</a></li><li><a href="#ch00-我们要搭的东西-一张图">我们要搭的东西（一张图）</a></li><li><a href="#ch00-技术选型的原则">技术选型的原则</a></li><li><a href="#ch00-你需要的环境">你需要的环境</a></li><li><a href="#ch00-怎么读">怎么读</a></li></ul></li><li data-ch="ch01"><a href="#ch01"><span class="mono">01</span><span class="toc-title">直播链路总览与协议选型</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch01-目标">目标</a></li><li><a href="#ch01-原理-一条直播流经过了什么">原理：一条直播流经过了什么</a></li><li><a href="#ch01-代码走读-房间的-播放策略-是数据-不是代码">代码走读：房间的&amp;quot;播放策略&amp;quot;是数据，不是代码</a></li><li><a href="#ch01-动手实验">动手实验</a></li><li><a href="#ch01-度量">度量</a></li><li><a href="#ch01-生产注意事项">生产注意事项</a></li><li><a href="#ch01-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch02"><a href="#ch02"><span class="mono">02</span><span class="toc-title">本地媒体服务器与推流</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch02-目标">目标</a></li><li><a href="#ch02-选型-为什么是-mediamtx">选型：为什么是 MediaMTX</a></li><li><a href="#ch02-代码走读">代码走读</a></li><li><a href="#ch02-动手实验">动手实验</a></li><li><a href="#ch02-度量">度量</a></li><li><a href="#ch02-生产注意事项">生产注意事项</a></li><li><a href="#ch02-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch03"><a href="#ch03"><span class="mono">03</span><span class="toc-title">播放器内核适配层：hls.js / mpegts.js / WHEP</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch03-目标">目标</a></li><li><a href="#ch03-原理-三层分离">原理：三层分离</a></li><li><a href="#ch03-代码走读">代码走读</a></li><li><a href="#ch03-动手实验">动手实验</a></li><li><a href="#ch03-度量">度量</a></li><li><a href="#ch03-生产注意事项">生产注意事项</a></li><li><a href="#ch03-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch04"><a href="#ch04"><span class="mono">04</span><span class="toc-title">起播速度：把首帧压进 1 秒</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch04-目标">目标</a></li><li><a href="#ch04-原理-首帧的时间线">原理：首帧的时间线</a></li><li><a href="#ch04-代码走读-每一段对应的优化">代码走读：每一段对应的优化</a></li><li><a href="#ch04-动手实验">动手实验</a></li><li><a href="#ch04-度量">度量</a></li><li><a href="#ch04-生产注意事项">生产注意事项</a></li><li><a href="#ch04-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch05"><a href="#ch05"><span class="mono">05</span><span class="toc-title">卡顿率、弱网与跨境播放策略</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch05-目标">目标</a></li><li><a href="#ch05-原理">原理</a></li><li><a href="#ch05-代码走读-弱网代理">代码走读：弱网代理</a></li><li><a href="#ch05-动手实验">动手实验</a></li><li><a href="#ch05-度量">度量</a></li><li><a href="#ch05-生产注意事项">生产注意事项</a></li><li><a href="#ch05-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch06"><a href="#ch06"><span class="mono">06</span><span class="toc-title">弹幕渲染引擎</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch06-目标">目标</a></li><li><a href="#ch06-原理">原理</a></li><li><a href="#ch06-代码走读">代码走读</a></li><li><a href="#ch06-动手实验">动手实验</a></li><li><a href="#ch06-度量">度量</a></li><li><a href="#ch06-生产注意事项">生产注意事项</a></li><li><a href="#ch06-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch07"><a href="#ch07"><span class="mono">07</span><span class="toc-title">IM 网关与弹幕协议</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch07-目标">目标</a></li><li><a href="#ch07-原理-大厂怎么做">原理：大厂怎么做</a></li><li><a href="#ch07-协议-packages-protocol-src-im-ts">协议（packages/protocol/src/im.ts）</a></li><li><a href="#ch07-代码走读">代码走读</a></li><li><a href="#ch07-动手实验">动手实验</a></li><li><a href="#ch07-度量">度量</a></li><li><a href="#ch07-生产注意事项">生产注意事项</a></li><li><a href="#ch07-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch08"><a href="#ch08"><span class="mono">08</span><span class="toc-title">主播互动：点赞、礼物动画、投票、置顶、公告、连麦</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch08-目标">目标</a></li><li><a href="#ch08-原理-互动的三种形态">原理：互动的三种形态</a></li><li><a href="#ch08-代码走读">代码走读</a></li><li><a href="#ch08-动手实验">动手实验</a></li><li><a href="#ch08-度量">度量</a></li><li><a href="#ch08-生产注意事项">生产注意事项</a></li><li><a href="#ch08-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch09"><a href="#ch09"><span class="mono">09</span><span class="toc-title">付费与钱包：Mock 支付、签名 Webhook、幂等、双式账本</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch09-目标">目标</a></li><li><a href="#ch09-原理">原理</a></li><li><a href="#ch09-代码走读-apps-api-src-modules-wallet-pay-mock-gifts">代码走读（apps/api/src/modules/wallet|pay-mock|gifts）</a></li><li><a href="#ch09-动手实验">动手实验</a></li><li><a href="#ch09-度量">度量</a></li><li><a href="#ch09-生产注意事项">生产注意事项</a></li><li><a href="#ch09-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch10"><a href="#ch10"><span class="mono">10</span><span class="toc-title">运营工具：主播控制台与管理后台</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch10-目标">目标</a></li><li><a href="#ch10-原理-运营工具是数据的-汇聚层">原理：运营工具是数据的&amp;quot;汇聚层&amp;quot;</a></li><li><a href="#ch10-代码走读">代码走读</a></li><li><a href="#ch10-动手实验">动手实验</a></li><li><a href="#ch10-生产注意事项">生产注意事项</a></li><li><a href="#ch10-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch11"><a href="#ch11"><span class="mono">11</span><span class="toc-title">播放质量监控、埋点与异常采集</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch11-目标">目标</a></li><li><a href="#ch11-原理-指标定义-本项目采用">原理：指标定义（本项目采用）</a></li><li><a href="#ch11-代码走读">代码走读</a></li><li><a href="#ch11-动手实验">动手实验</a></li><li><a href="#ch11-生产注意事项">生产注意事项</a></li><li><a href="#ch11-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch12"><a href="#ch12"><span class="mono">12</span><span class="toc-title">前端性能与工程化</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch12-目标">目标</a></li><li><a href="#ch12-原理与代码走读">原理与代码走读</a></li><li><a href="#ch12-动手实验">动手实验</a></li><li><a href="#ch12-生产注意事项">生产注意事项</a></li><li><a href="#ch12-面试-复盘要点">面试/复盘要点</a></li></ul></li><li data-ch="ch13"><a href="#ch13"><span class="mono">13</span><span class="toc-title">上云与 CDN：跨境直播的生产方案</span><span class="done" aria-hidden="true">✓</span></a>
+      <ul><li><a href="#ch13-目标">目标</a></li><li><a href="#ch13-云直播服务对比">云直播服务对比</a></li><li><a href="#ch13-参考架构">参考架构</a></li><li><a href="#ch13-多-cdn-调度-由粗到细">多 CDN 调度（由粗到细）</a></li><li><a href="#ch13-ll-hls-上-cdn-的核对清单">LL-HLS 上 CDN 的核对清单</a></li><li><a href="#ch13-中国合规与跨境">中国合规与跨境</a></li><li><a href="#ch13-成本估算工作表">成本估算工作表</a></li><li><a href="#ch13-迁移步骤-从本项目到云">迁移步骤（从本项目到云）</a></li><li><a href="#ch13-面试-复盘要点">面试/复盘要点</a></li></ul></li>
+  </ol>
+  <div class="toc-appendix"><span class="eyebrow">附录 · 调研报告</span>
+    <ol class="toc-list"><li data-ch="ap0"><a href="#ap0"><span class="mono">A</span><span class="toc-title">浏览器端直播播放技术现状调研</span></a></li><li data-ch="ap1"><a href="#ap1"><span class="mono">B</span><span class="toc-title">跨境直播平台 媒体后端 / 云直播 / CDN 选型报告</span></a></li><li data-ch="ap2"><a href="#ap2"><span class="mono">C</span><span class="toc-title">直播互动层技术调研报告</span></a></li><li data-ch="ap3"><a href="#ap3"><span class="mono">D</span><span class="toc-title">浏览器直播播放器 QoE 监控 / 埋点 / 异常采集 —— 2026-09 现状调研</span></a></li></ol></div>
+</nav>
+  <main class="content">
+    <section class="cover">
+      <span class="eyebrow">直播 / 视频播放前端 · 全链路实践</span>
+      <h1 class="cover-title">从推流到首帧，从弹幕到账本：<br>一份可以跑起来的直播前端手册</h1>
+      <p class="lede">对应岗位要求逐项落地：直播间播放（LL-HLS / HTTP-FLV / WebRTC）、弹幕与 IM、主播互动、付费、运营工具；起播速度、卡顿率、弱网与跨境；播放质量监控、埋点与异常采集。每一章都指向仓库里真实运行的代码与可复现的实验。</p>
+      <div class="cover-facts">
+        <div><span class="mono big">≈0.3s</span><span>本机 LL-HLS 首帧</span></div>
+        <div><span class="mono big">150ms</span><span>IM 批帧周期</span></div>
+        <div><span class="mono big">5 级</span><span>卡顿恢复阶梯</span></div>
+        <div><span class="mono big">275+</span><span>自动化用例</span></div>
+      </div>
+      <p class="cover-note">技术版本均于 2026-09-13 核实：React 19.3 · Vite 8.3 · TypeScript 5.9.3 · hls.js 1.7.3 · mpegts.js 1.8.2 · media-chrome 4.19 · Fastify 5.12 · MediaMTX 1.21.0 · ClickHouse 26.8 · Grafana 13.2。</p>
+    </section>
+    
+<section class="chapter" id="ch00" data-num="00">
+  <header class="chapter-head">
+    <span class="eyebrow">第 00 章</span>
+    <h1>导读：这份教程要带你做成什么</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch00"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch00-目标画像">目标画像</h2><p>这份教程对应的是&quot;直播及视频播放前端&quot;岗位的完整能力面：</p>
+<div class="table-wrap"><table><thead><tr><th>岗位要求</th><th>教程对应章节</th><th>项目里的落点</th></tr></thead><tbody><tr><td>直播间播放（HLS / 播放器内核 / CDN / 缓存 / 流媒体链路）</td><td>01–05</td><td><code>packages/player-core</code>、<code>infra/mediamtx.yml</code></td></tr><tr><td>弹幕 / IM</td><td>06–07</td><td><code>packages/danmaku</code>、<code>apps/api/src/modules/im</code></td></tr><tr><td>主播互动</td><td>08</td><td>点赞聚合、礼物动画、投票、置顶、公告、连麦信令</td></tr><tr><td>付费</td><td>09</td><td>钱包、Mock 收银台、签名 Webhook、幂等、双式账本</td></tr><tr><td>运营工具</td><td>10</td><td>主播控制台、管理后台、聊天治理</td></tr><tr><td>起播速度 / 卡顿率 / 弱网 / 跨境</td><td>04–05、13</td><td>起播预设、恢复阶梯、弱网代理、多 CDN 调度</td></tr><tr><td>播放质量监控 / 埋点 / 异常采集</td><td>11</td><td><code>packages/telemetry</code>、ClickHouse、Grafana 看板与告警</td></tr><tr><td>前端可观测性、性能</td><td>12</td><td>web-vitals、分包、报障流程</td></tr></tbody></table></div><p>不在范围内：Flutter、Android/iOS 原生（按你的要求剔除）；真实支付渠道联调（只做 Mock，并说明生产接入点）；DRM。</p>
+<h2 id="ch00-我们要搭的东西-一张图">我们要搭的东西（一张图）</h2><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"> OBS / ffmpeg ──RTMP──▶ MediaMTX ──┬─ LL-HLS ─────┐
+                        (SRS 可选) ├─ WHEP ───────┤          ┌────────── Grafana
+                                   └─ HTTP-FLV ───┤          │
+                                                  ▼          │
+      ┌─────────────┐    REST + WebSocket    ┌──────────┐  ClickHouse
+      │  apps/web   │◀──────────────────────▶│ apps/api │──────┘
+      │ React 19    │                        │ Fastify 5│◀─── Redis（可选，扇出）
+      └─────────────┘                        └──────────┘
+        观众直播间 / 主播控制台 / 管理后台 / 播放实验室 / Mock 收银台</code></pre></figure><p>每一层都能在你的笔记本上跑起来，且与线上架构同构：本地 MediaMTX 之于阿里云直播 / Cloudflare Stream，就像 SQLite 之于 PostgreSQL。教程的每一章都以&quot;这段代码在生产里换成什么&quot;结尾。</p>
+<h2 id="ch00-技术选型的原则">技术选型的原则</h2><p>所有版本号均在 2026-09-13 通过 npm registry、GitHub Releases、Docker Hub 实时核对（见附录调研报告），原则是<strong>最新且成熟</strong>：</p>
+<ul>
+<li>采用：React 19.3、Vite 8.3（Rolldown）、TypeScript 5.9.3、Tailwind 4.3、react-router 8.3、Zustand 5、TanStack Query 5、hls.js 1.7.3、mpegts.js 1.8.2、media-chrome 4.19、Fastify 5.12、Node <code>node:sqlite</code>、MediaMTX 1.21.0、SRS 6、ClickHouse 26.8 LTS、Grafana 13.2。</li>
+<li>刻意不用：TypeScript 7.0（发布当天，生态未跟上）、MoQ（Cloudflare 仍是 tech preview）、Video.js v10（RC，GA 后可平滑迁移）、Vidstack（进入轻维护）、nginx-rtmp（20 个月无提交）。</li>
+</ul>
+<h2 id="ch00-你需要的环境">你需要的环境</h2><ul>
+<li>macOS / Linux / WSL2；Node ≥ 22.13（教程机器是 25.8）；pnpm 10；Docker Desktop（含 Compose v2）。</li>
+<li>可选：OBS 32（用真实推流替换测试图）。</li>
+</ul>
+<figure class="code" data-lang="bash"><div class="code-bar"><span>bash</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">git <span class="hljs-built_in">clone</span> &lt;本仓库&gt; livelab &amp;&amp; <span class="hljs-built_in">cd</span> livelab
+pnpm install
+pnpm infra:up          <span class="hljs-comment"># MediaMTX + 测试推流 + Redis + ClickHouse + Grafana</span>
+pnpm infra:flv         <span class="hljs-comment"># 可选：再起 SRS，提供 HTTP-FLV</span>
+pnpm dev               <span class="hljs-comment"># api :8787 + web :5174</span></code></pre></figure><p>打开 <a href="http://localhost:5174">http://localhost:5174</a> ，进入 <code>demo</code> 房间。画面左上角烧录了推流端的时钟，用它减去你手机/电脑当前时间，就是端到端延迟。</p>
+<h2 id="ch00-怎么读">怎么读</h2><p>每章结构固定：<strong>目标 → 原理 → 代码走读 → 动手实验 → 度量 → 生产注意事项 → 面试/复盘要点</strong>。建议按顺序读 01–05（播放主线），06–10 可按兴趣跳读，11–13 是能力上限所在，也是岗位描述里&quot;加分项&quot;集中的地方。</p>
+</div>
+  <footer class="chapter-nav">
+    <span></span>
+    <a class="next" href="#ch01">01 直播链路总览与协议选型 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch01" data-num="01">
+  <header class="chapter-head">
+    <span class="eyebrow">第 01 章</span>
+    <h1>直播链路总览与协议选型</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch01"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch01-目标">目标</h2><p>读完本章你能画出&quot;主播 → 观众&quot;的完整链路，并对任意一个业务场景（带货、赛事、秀场、连麦）说出该用哪种协议、延迟预期是多少、CDN 要什么能力、iOS 上会不会翻车。</p>
+<h2 id="ch01-原理-一条直播流经过了什么">原理：一条直播流经过了什么</h2><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">采集/编码 ──推流协议──▶ 接入(Ingest) ──▶ 转码/封装(Origin) ──分发协议──▶ CDN 边缘 ──▶ 播放器
+OBS/手机   RTMP/SRT/WHIP    就近 PoP        ABR 阶梯、切片        HLS/LL-HLS/FLV/WebRTC   hls.js/mpegts.js/RTCPeerConnection
+ ~20–30ms                    ~10ms           300ms–2s              1–30s（协议决定）        解码+渲染 100–200ms</code></pre></figure><p>延迟是&quot;每一段的缓冲&quot;之和。抖音/火山引擎公开过的拆解：生产端 20–30ms，服务端转码 300ms–2s，消费端 100–200ms；剩下的都是<strong>分发协议的缓冲策略</strong>决定的。所以选协议 = 选延迟档位 + 选 CDN 成本 + 选终端兼容性。</p>
+<h3 id="ch01-推流侧-贡献链路-三选一">推流侧（贡献链路）三选一</h3><div class="table-wrap"><table><thead><tr><th>协议</th><th>传输</th><th>适用</th><th>备注</th></tr></thead><tbody><tr><td>RTMP</td><td>TCP</td><td>默认，OBS/编码器全支持</td><td>拥塞时延迟尖峰；H.265 需扩展</td></tr><tr><td>SRT</td><td>UDP + ARQ</td><td>弱网、跨境专线之外的公网贡献</td><td>1s 缓冲可恢复 ~25% 丢包；OBS latency ≥ 2.5×RTT</td></tr><tr><td>WHIP</td><td>WebRTC</td><td>浏览器推流、连麦、亚秒互动</td><td>RFC 9725（2025）；OBS ≥30、FFmpeg ≥8.0 内置</td></tr></tbody></table></div><h3 id="ch01-分发侧-播放链路-四档">分发侧（播放链路）四档</h3><div class="table-wrap"><table><thead><tr><th></th><th>HLS</th><th>LL-HLS</th><th>HTTP-FLV</th><th>WebRTC（WHEP）</th></tr></thead><tbody><tr><td>端到端延迟</td><td>20–45s（调优 5s）</td><td>2–4s</td><td>1–3s</td><td>0.1–0.5s</td></tr><tr><td>传输</td><td>HTTP 分片</td><td>HTTP 分片 + Partial Segment + 阻塞式清单刷新</td><td>HTTP 长连接</td><td>UDP/SRTP</td></tr><tr><td>CDN 要求</td><td>任意</td><td>HTTP/2+、<code>_HLS_msn/_HLS_part</code> 进缓存键、短 TTL、回源合并</td><td>长连接透传（国内 CDN 普遍支持）</td><td>需 SFU/实时边缘（阿里 RTS、腾讯 LEB、Cloudflare、IVS RT）</td></tr><tr><td>iOS Safari</td><td>原生</td><td>原生</td><td>仅 iOS 17.1+ 经 ManagedMediaSource（mpegts.js）</td><td>原生</td></tr><tr><td>成本</td><td>最低</td><td>略高（请求数 ×10）</td><td>中</td><td>最高（按分钟计费）</td></tr><tr><td>典型</td><td>回放式直播、大型赛事</td><td>带货、新闻、赛事</td><td>国内秀场/游戏桌面端</td><td>拍卖、连麦、竞猜</td></tr></tbody></table></div><p>数据来源见附录 01（Mux、SRS、Cloudflare、MediaMTX 生产基准）。</p>
+
+<div class="widget" data-widget="protocols">
+  <div class="widget-head"><span class="eyebrow">交互 · 协议延迟档位</span><span class="widget-note">点一个协议，看它在延迟轴上的位置与代价</span></div>
+  <div class="proto-row" role="tablist">
+    <button class="proto" data-p="hls" role="tab">HLS</button>
+    <button class="proto is-on" data-p="llhls" role="tab" aria-selected="true">LL-HLS</button>
+    <button class="proto" data-p="flv" role="tab">HTTP-FLV</button>
+    <button class="proto" data-p="whep" role="tab">WebRTC</button>
+  </div>
+  <div class="axis"><div class="axis-ticks"><span>0.1s</span><span>1s</span><span>10s</span><span>60s</span></div><div class="axis-bar"><div class="axis-range" id="proto-range"></div></div></div>
+  <dl class="proto-facts" id="proto-facts"></dl>
+</div>
+
+<h3 id="ch01-为什么-ll-hls-现在是-默认答案">为什么 LL-HLS 现在是&quot;默认答案&quot;</h3><ol>
+<li><strong>iOS 原生支持</strong>：不需要 JS 播放器就能 2–4s，AirPlay/画中画完整。</li>
+<li><strong>一套 CMAF 切片同时服务 HLS/DASH</strong>，CDN 成本最低。</li>
+<li><strong>hls.js 1.7 已把 LL-HLS 做成默认</strong>（<code>lowLatencyMode: true</code>），并补齐 CMCD v2，让 CDN 日志能按会话关联播放器上报。</li>
+<li>HTTP-FLV 仍是国内桌面端的现实选择（SRS/CDN 生态成熟），但 iOS 只能走 MMS 兜底，且 mpegts.js 单人维护；WebRTC 单价最高，只给需要互动的房间开。</li>
+</ol>
+<h2 id="ch01-代码走读-房间的-播放策略-是数据-不是代码">代码走读：房间的&quot;播放策略&quot;是数据，不是代码</h2><p><code>apps/api/src/modules/rooms/pathways.ts</code> 把上面的选型表变成了每个房间返回给播放器的 JSON：</p>
+<figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-comment">// 标准房间：LL-HLS(ABR) → LL-HLS(直连) → HTTP-FLV → WebRTC</span>
+<span class="hljs-comment">// 互动房间：WebRTC → LL-HLS(ABR) → LL-HLS(直连) → HTTP-FLV</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">buildPathways</span>(<span class="hljs-params">room, cfg</span>): <span class="hljs-title class_">Pathway</span>[] { ... }
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">policyFor</span>(<span class="hljs-params">room</span>): <span class="hljs-title class_">PlayPolicy</span> {
+  <span class="hljs-keyword">return</span> room.<span class="hljs-property">mode</span> === <span class="hljs-string">&#x27;interactive&#x27;</span>
+    ? { <span class="hljs-attr">preferred</span>: <span class="hljs-string">&#x27;whep&#x27;</span>, <span class="hljs-attr">targetLatencySec</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">maxStartupMs</span>: <span class="hljs-number">2000</span>, <span class="hljs-attr">stallLadder</span>: [<span class="hljs-string">&#x27;switch_pathway&#x27;</span>, <span class="hljs-string">&#x27;switch_protocol&#x27;</span>] }
+    : { <span class="hljs-attr">preferred</span>: <span class="hljs-string">&#x27;llhls&#x27;</span>, <span class="hljs-attr">targetLatencySec</span>: <span class="hljs-number">3</span>, <span class="hljs-attr">maxStartupMs</span>: <span class="hljs-number">3000</span>, <span class="hljs-attr">stallLadder</span>: [<span class="hljs-string">&#x27;nudge&#x27;</span>, <span class="hljs-string">&#x27;seek_live&#x27;</span>, <span class="hljs-string">&#x27;downgrade&#x27;</span>, <span class="hljs-string">&#x27;switch_pathway&#x27;</span>, <span class="hljs-string">&#x27;switch_protocol&#x27;</span>] };
+}</code></pre></figure><p><code>Pathway</code> 里的 <code>cdn</code> 标签在本地是 <code>local-abr</code> / <code>local-a</code> / <code>local-flv</code> / <code>local-rtc</code>，上线后就是 <code>aliyun-cn</code> / <code>cloudflare</code> / <code>cloudfront</code>——播放器的回退链、遥测的维度、多 CDN 调度都靠它。<strong>把策略放在服务端下发</strong>，意味着运营可以按地区/房间/时段调整，而不用发版。</p>
+<h2 id="ch01-动手实验">动手实验</h2><ol>
+<li><code>curl localhost:8787/v1/rooms/demo/play | jq</code>，观察 4 条 pathway 与 policy。</li>
+<li><code>curl localhost:8787/v1/rooms/demo-rt/play | jq</code>，看互动房间如何把 WHEP 放到第一位。</li>
+<li>直接用浏览器打开 <code>http://localhost:8888/live/demo/index.m3u8?cookieCheck=1</code>，阅读 MediaMTX 生成的多码率清单：注意 <code>#EXT-X-VERSION:10</code>、独立的音频 rendition、<code>video1_stream.m3u8</code>。再打开媒体清单，找到 <code>#EXT-X-PART</code>、<code>#EXT-X-PRELOAD-HINT</code>、<code>#EXT-X-SERVER-CONTROL:CAN-BLOCK-RELOAD=YES,PART-HOLD-BACK=...</code>——这三样就是 LL-HLS 与普通 HLS 的全部区别。</li>
+</ol>
+<h2 id="ch01-度量">度量</h2><p>打开 <code>/lab</code> 页面同时起三路播放，对比 TTFF（首帧耗时）与延迟：LL-HLS ≈ 2–4s，FLV ≈ 1–3s，WHEP &lt; 1s。用画面里烧录的时钟减去当前时间验证。</p>
+<h2 id="ch01-生产注意事项">生产注意事项</h2><ul>
+<li><strong>协议是房间属性，不是全局配置</strong>：带货间开 WebRTC，大盘观众走 LL-HLS，两者用同一路推流。</li>
+<li><strong>LL-HLS 上 CDN 前先验证阻塞式清单刷新</strong>：很多&quot;支持 LL-HLS&quot;的 CDN 只是透传，<code>_HLS_msn</code> 未进缓存键时观众拿到旧清单。</li>
+<li><strong>iOS 走原生 <code>&lt;video src=m3u8&gt;</code></strong>，除非你需要 JS 侧 ABR/统计才启用 <code>preferManagedMediaSource</code>。</li>
+<li>MoQ（Media over QUIC）在 2026 是&quot;可试点不可依赖&quot;：WebTransport 已 Baseline，但 Cloudflare relay 仍是 tech preview。</li>
+</ul>
+<h2 id="ch01-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>能按&quot;延迟档位 × CDN 能力 × 终端兼容 × 成本&quot;四维讲清楚四种协议，并说出 LL-HLS 的三个关键 tag。</li>
+<li>能解释为什么播放策略要服务端下发（灰度、按地区、按房间模式）。</li>
+<li>知道 WHIP 已成 RFC 9725 而 WHEP 仍是 draft-04，但业界已量产。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch00">← 00 导读：这份教程要带你做成什么</a>
+    <a class="next" href="#ch02">02 本地媒体服务器与推流 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch02" data-num="02">
+  <header class="chapter-head">
+    <span class="eyebrow">第 02 章</span>
+    <h1>本地媒体服务器与推流</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch02"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch02-目标">目标</h2><p>一条命令拉起与生产同构的&quot;接入 → 封装 → 分发&quot;链路，并理解每个端口、每个配置项在线上对应什么。</p>
+<h2 id="ch02-选型-为什么是-mediamtx">选型：为什么是 MediaMTX</h2><div class="table-wrap"><table><thead><tr><th>项目</th><th>版本（2026-09）</th><th>推流</th><th>播放</th><th>结论</th></tr></thead><tbody><tr><td>MediaMTX</td><td>1.21.0</td><td>RTSP/RTMP/SRT/WHIP/HLS/MoQ</td><td>LL-HLS/WHEP/RTSP/RTMP/SRT/MoQ</td><td>单二进制、协议最全，本地首选</td></tr><tr><td>SRS</td><td>6.0-r1（7.0 dev）</td><td>RTMP/SRT/WHIP/GB28181</td><td>HTTP-FLV/HLS/DASH/WHEP</td><td>国内 CDN 常见的 HTTP-FLV 路径，作为第二选择</td></tr><tr><td>OvenMediaEngine</td><td>0.21.0</td><td>RTMP/SRT/WHIP</td><td>LLHLS/WebRTC</td><td>LLHLS+WebRTC 参考实现，配置较重</td></tr><tr><td>nginx-rtmp</td><td>2024-12 最后提交</td><td>RTMP</td><td>HLS/DASH</td><td>停滞，不推荐</td></tr></tbody></table></div><h2 id="ch02-代码走读">代码走读</h2><h3 id="ch02-infra-docker-compose-yml"><code>infra/docker-compose.yml</code></h3><div class="table-wrap"><table><thead><tr><th>服务</th><th>镜像</th><th>端口</th><th>线上对应</th></tr></thead><tbody><tr><td>mediamtx</td><td><code>bluenviron/mediamtx:1.21.0</code></td><td>1935 RTMP · 8888 HLS · 8889 WebRTC · 8189/udp ICE · 8890/udp SRT · 9997 API</td><td>云直播的接入点 + 封装 Origin + 实时边缘</td></tr><tr><td>pusher</td><td><code>linuxserver/ffmpeg</code></td><td>—</td><td>主播的 OBS</td></tr><tr><td>srs（profile <code>flv</code>）</td><td><code>ossrs/srs:6</code></td><td>1936 RTMP · 8080 HTTP-FLV · 1985 API</td><td>国内 CDN 的 FLV 边缘</td></tr><tr><td>redis</td><td><code>redis:7-alpine</code></td><td>6390</td><td>IM 扇出与在线态</td></tr><tr><td>clickhouse</td><td><code>clickhouse/clickhouse-server:26.8</code></td><td>8123</td><td>QoE 事件仓库</td></tr><tr><td>grafana</td><td><code>grafana/grafana:13.2.1</code></td><td>3000</td><td>质量看板与告警</td></tr></tbody></table></div><h3 id="ch02-infra-mediamtx-yml-中真正重要的几行"><code>infra/mediamtx.yml</code> 中真正重要的几行</h3><figure class="code" data-lang="yaml"><div class="code-bar"><span>yaml</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-attr">hlsAlwaysRemux:</span> <span class="hljs-literal">true</span>      <span class="hljs-comment"># 有推流就开始切片，而不是等第一个观众来——省掉观众的 muxer 预热 ≈ 1–2s 起播</span>
+<span class="hljs-attr">hlsVariant:</span> <span class="hljs-string">lowLatency</span>    <span class="hljs-comment"># LL-HLS：Partial Segment + 阻塞式清单刷新</span>
+<span class="hljs-attr">hlsSegmentDuration:</span> <span class="hljs-string">1s</span>
+<span class="hljs-attr">hlsPartDuration:</span> <span class="hljs-string">500ms</span>    <span class="hljs-comment"># Apple 建议 200–500ms；越小请求越多、延迟越低</span>
+<span class="hljs-attr">hlsSegmentCount:</span> <span class="hljs-number">7</span>        <span class="hljs-comment"># 清单窗口 7s</span>
+<span class="hljs-attr">webrtcAdditionalHosts:</span> [<span class="hljs-string">&quot;127.0.0.1&quot;</span>, <span class="hljs-string">&quot;localhost&quot;</span>]   <span class="hljs-comment"># ICE 候选里宣告的地址；上云时改成公网 IP 或 TURN</span></code></pre></figure><p>还有一个只在开发环境这么做的地方：<code>authInternalUsers</code> 允许任何 IP 调 API（线上必须换成 <code>authHTTPAddress</code> 回调，用推流密钥鉴权）。</p>
+<h3 id="ch02-infra-pusher-push-sh-不用素材文件的测试流"><code>infra/pusher/push.sh</code>：不用素材文件的测试流</h3><figure class="code" data-lang="sh"><div class="code-bar"><span>sh</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">ffmpeg -re -f lavfi -i <span class="hljs-string">&quot;testsrc2=size=1280x720:rate=30&quot;</span> -f lavfi -i <span class="hljs-string">&quot;sine=frequency=440&quot;</span> \
+  -/filter_complex /filter.txt \          <span class="hljs-comment"># drawtext 烧录当前时钟 + split 出三路</span>
+  ... -f flv rtmp://mediamtx:1935/live/demo \
+  ... -f flv rtmp://mediamtx:1935/live/demo_720 \
+  ... -f flv rtmp://mediamtx:1935/live/demo_360</code></pre></figure><p>三点值得记住：</p>
+<ol>
+<li><strong><code>-re</code> + <code>-stream_loop</code>/lavfi</strong> 让 ffmpeg 按实时速率推，而不是尽快推完。</li>
+<li><strong><code>-g 30 -keyint_min 30 -sc_threshold 0</code></strong>：固定 1s GOP，且禁止场景切换插关键帧。切片边界必须落在关键帧上，GOP 不固定会让 LL-HLS 的分片时长漂移、起播变慢。</li>
+<li><strong>烧录时钟</strong>：<code>drawtext=text=&#39;%{localtime}&#39;</code>，观众端画面时间与手机时间之差就是端到端延迟。ffmpeg 7+ 用 <code>-/filter_complex FILE</code> 读滤镜脚本，绕开 <code>:</code> 的两层转义。</li>
+</ol>
+<p>三路是为了 ABR：<code>demo_720</code>（2.5Mbps）和 <code>demo_360</code>（0.7Mbps）由 api 拼成一个多码率 master playlist（见第 04 章），hls.js 才有档位可切。</p>
+<h2 id="ch02-动手实验">动手实验</h2><figure class="code" data-lang="bash"><div class="code-bar"><span>bash</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">pnpm infra:up
+curl -s localhost:9997/v3/paths/list | jq <span class="hljs-string">&#x27;.items[] | {name, ready, tracks}&#x27;</span>
+curl -s <span class="hljs-string">&#x27;localhost:8888/live/demo/index.m3u8?cookieCheck=1&#x27;</span></code></pre></figure><p>注意第一次 <code>curl</code> 不带 <code>?cookieCheck=1</code> 会得到 302：MediaMTX 对无 <code>Origin</code> 头的普通请求做一次 cookie 探测；浏览器 XHR/fetch 自带 <code>Origin</code>，直接 200。这是排障时常见的&quot;curl 不通但浏览器通&quot;。</p>
+<p>用 OBS 替换测试流：设置 → 直播 → 服务 Custom，服务器 <code>rtmp://localhost/live</code>，密钥 <code>demo</code>。或者 WHIP：服务 WHIP，服务器 <code>http://localhost:8889/live/demo/whip</code>。</p>
+<p>HTTP-FLV：<code>pnpm infra:flv</code>，然后 <code>curl -s -o /dev/null -w &#39;%{http_code} %{size_download}\n&#39; -m 3 http://localhost:8080/live/demo.flv</code>。</p>
+<h2 id="ch02-度量">度量</h2><p><code>curl -s localhost:9998/metrics | grep -E &quot;^(paths|hls_muxers|webrtc_sessions)&quot;</code> 是 MediaMTX 的 Prometheus 指标：推流字节、观众数、WebRTC 会话——主播控制台的&quot;健康度卡片&quot;就读这里的 JSON 版本 <code>/v3/paths/get/live/demo</code>。</p>
+<h2 id="ch02-生产注意事项">生产注意事项</h2><ul>
+<li>接入点要<strong>就近</strong>：跨境主播先接本地 PoP，再经专线回源（阿里云 GA / 腾讯 GAAP，需联通跨境资质）。</li>
+<li>转码 ABR 阶梯 2026 常见值：1080p 4.5M / 720p 2.5M / 540p 1.4M / 360p 0.7M / 纯音频 64–96k；最低档纯音频是弱网的底线。</li>
+<li>WebRTC 上云要配 TURN 与 <code>webrtcAdditionalHosts</code>，否则 NAT 后的观众连不上。</li>
+<li>推流鉴权：<code>authHTTPAddress</code> 回调你的 api 校验 stream key，禁止匿名推流。</li>
+</ul>
+<h2 id="ch02-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>说得出 LL-HLS 的 part duration、segment duration、窗口大小与延迟/请求量的关系。</li>
+<li>知道 GOP 固定为什么影响起播与切片。</li>
+<li>能解释 <code>hlsAlwaysRemux</code> 这类&quot;预热&quot;型优化：把成本从观众的首帧移到服务端常驻。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch01">← 01 直播链路总览与协议选型</a>
+    <a class="next" href="#ch03">03 播放器内核适配层：hls.js / mpegts.js / WHEP →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch03" data-num="03">
+  <header class="chapter-head">
+    <span class="eyebrow">第 03 章</span>
+    <h1>播放器内核适配层：hls.js / mpegts.js / WHEP</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch03"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch03-目标">目标</h2><p>写出一个&quot;引擎可替换、UI 不感知、指标口径统一&quot;的播放器内核层。这是直播前端最核心的一块代码，也是面试里最容易被追问细节的地方。</p>
+<h2 id="ch03-原理-三层分离">原理：三层分离</h2><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">┌──────────────────────────── UI 层（media-chrome / Video.js v10）───────────────────────────┐
+│  只关心 &lt;video&gt; 的 paused / volume / fullscreen，不知道流是怎么来的                         │
+├──────────────────────────── 控制层 PlayerController ──────────────────────────────────────┤
+│  输入 pathways + policy → 选引擎 → 回退链 → 卡顿恢复阶梯 → 产出统一的 QoE 事件              │
+├──────── HlsEngine ───────┬──────── FlvEngine ───────┬──────── WhepEngine ───────┬─ Native ─┤
+│  hls.js 1.7 (MSE)        │  mpegts.js 1.8 (MSE)     │  RTCPeerConnection        │ &lt;video src&gt;│
+└──────────────────────────┴──────────────────────────┴───────────────────────────┴──────────┘
+                                          ▼ 都只写同一个 &lt;video&gt;</code></pre></figure><p>所有引擎实现同一个接口（<code>packages/player-core/src/types.ts</code>）：</p>
+<figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-keyword">export</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">PlayerEngine</span> {
+  <span class="hljs-keyword">readonly</span> <span class="hljs-attr">kind</span>: <span class="hljs-string">&#x27;hls&#x27;</span> | <span class="hljs-string">&#x27;flv&#x27;</span> | <span class="hljs-string">&#x27;whep&#x27;</span> | <span class="hljs-string">&#x27;native-hls&#x27;</span>;
+  <span class="hljs-title function_">load</span>(<span class="hljs-attr">video</span>: <span class="hljs-title class_">HTMLVideoElement</span>, <span class="hljs-attr">src</span>: <span class="hljs-built_in">string</span>, <span class="hljs-attr">opts</span>: <span class="hljs-title class_">EngineOptions</span>): <span class="hljs-title class_">Promise</span>&lt;<span class="hljs-built_in">void</span>&gt;;
+  <span class="hljs-title function_">destroy</span>(): <span class="hljs-built_in">void</span>;
+  <span class="hljs-title function_">getStats</span>(): <span class="hljs-title class_">EngineStats</span>;        <span class="hljs-comment">// latencyMs, bufferMs, bitrateKbps, level, dropped/total frames, playbackRate</span>
+  <span class="hljs-title function_">setLevel</span>(<span class="hljs-attr">level</span>: <span class="hljs-built_in">number</span>): <span class="hljs-built_in">void</span>;  <span class="hljs-comment">// -1 = auto</span>
+  <span class="hljs-title function_">seekToLive</span>(): <span class="hljs-built_in">void</span>;
+  <span class="hljs-title function_">on</span>(event, cb): <span class="hljs-function">() =&gt;</span> <span class="hljs-built_in">void</span>;      <span class="hljs-comment">// ready | playing | stall_start | stall_end | level_switch | error | stats | log</span>
+}</code></pre></figure><p>接口里没有任何 hls.js 或 mpegts.js 的类型泄漏——这就是&quot;引擎可替换&quot;的全部秘密。</p>
+<h2 id="ch03-代码走读">代码走读</h2><h3 id="ch03-hlsengine-engines-hls-ts-hls-config-ts">HlsEngine（<code>engines/hls.ts</code> + <code>hls-config.ts</code>）</h3><p><code>buildHlsConfig</code> 是纯函数，把&quot;业务意图&quot;翻译成 hls.js 配置：</p>
+<figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">{
+  <span class="hljs-attr">lowLatencyMode</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">liveSyncDuration</span>: targetLatencySec,          <span class="hljs-comment">// 目标延迟（秒）</span>
+  <span class="hljs-attr">liveMaxLatencyDuration</span>: targetLatencySec * <span class="hljs-number">3</span>, <span class="hljs-comment">// 超过就 seek 到 live edge</span>
+  <span class="hljs-attr">maxLiveSyncPlaybackRate</span>: <span class="hljs-number">1.5</span>,                <span class="hljs-comment">// 落后时 1.5x 追帧，而不是跳</span>
+  <span class="hljs-attr">backBufferLength</span>: <span class="hljs-number">30</span>,                        <span class="hljs-comment">// 直播不需要无限回看缓冲</span>
+  <span class="hljs-attr">enableWorker</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">workerPath</span>: workerUrl,   <span class="hljs-comment">// ESM 构建必须显式给 worker URL，否则静默失效</span>
+  <span class="hljs-attr">startFragPrefetch</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">startLevel</span>: -<span class="hljs-number">1</span>, <span class="hljs-attr">abrEwmaDefaultEstimate</span>: 从 <span class="hljs-variable language_">localStorage</span> 恢复的上次带宽,
+  <span class="hljs-attr">testBandwidth</span>: 没有历史带宽时才做试探,
+  <span class="hljs-attr">cmcd</span>: { sessionId, contentId, <span class="hljs-attr">version</span>: <span class="hljs-number">2</span> },  <span class="hljs-comment">// CDN 日志关联</span>
+  fetchSetup / <span class="hljs-attr">xhrSetup</span>: requestTransform      <span class="hljs-comment">// 弱网代理、多 CDN 改写</span>
+}</code></pre></figure><p>错误处理是 hls.js 用法里最容易写错的部分：</p>
+<ul>
+<li>非致命错误（<code>fatal: false</code>）：hls.js 自己重试，我们只记日志。</li>
+<li>致命 <code>NETWORK_ERROR</code>：先 <code>hls.startLoad()</code> 重新拉流一次；10s 内再次致命才上报 <code>fatal:true</code>。</li>
+<li>致命 <code>MEDIA_ERROR</code>：先 <code>hls.recoverMediaError()</code>（重建 SourceBuffer）一次。</li>
+<li>其余致命：直接上报，交给控制层切线路。</li>
+</ul>
+<h3 id="ch03-flvengine-engines-flv-ts">FlvEngine（<code>engines/flv.ts</code>）</h3><p>mpegts.js 的两个延迟策略同时开：<code>liveBufferLatencyChasing</code>（缓冲超过 <code>MaxLatency</code> 直接 seek）与 <code>liveSync</code>（超过阈值提高 playbackRate）。SRS 开着 GOP cache，新观众进来会先收到一大段缓存，靠 chasing 才能贴到 live edge。iOS ≤17.0 没有 MSE，<code>mpegts.isSupported()</code> 为 false 时控制层不会选它。</p>
+<h3 id="ch03-whepengine-engines-whep-client-ts">WhepEngine（<code>engines/whep-client.ts</code>）</h3><p>WHEP 只是 50 行 fetch：</p>
+<figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">pc.<span class="hljs-title function_">addTransceiver</span>(<span class="hljs-string">&#x27;video&#x27;</span>, { <span class="hljs-attr">direction</span>: <span class="hljs-string">&#x27;recvonly&#x27;</span> });
+pc.<span class="hljs-title function_">addTransceiver</span>(<span class="hljs-string">&#x27;audio&#x27;</span>, { <span class="hljs-attr">direction</span>: <span class="hljs-string">&#x27;recvonly&#x27;</span> });
+<span class="hljs-keyword">await</span> pc.<span class="hljs-title function_">setLocalDescription</span>(<span class="hljs-keyword">await</span> pc.<span class="hljs-title function_">createOffer</span>());
+<span class="hljs-keyword">await</span> <span class="hljs-title function_">waitIceGatheringComplete</span>(pc, <span class="hljs-number">1000</span>);          <span class="hljs-comment">// MediaMTX 期望非 trickle</span>
+<span class="hljs-keyword">const</span> res = <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(endpoint, { <span class="hljs-attr">method</span>: <span class="hljs-string">&#x27;POST&#x27;</span>, <span class="hljs-attr">headers</span>: { <span class="hljs-string">&#x27;content-type&#x27;</span>: <span class="hljs-string">&#x27;application/sdp&#x27;</span> }, <span class="hljs-attr">body</span>: pc.<span class="hljs-property">localDescription</span>.<span class="hljs-property">sdp</span> });
+<span class="hljs-comment">// 201 + Location = 资源 URL；body = answer SDP</span>
+<span class="hljs-keyword">await</span> pc.<span class="hljs-title function_">setRemoteDescription</span>({ <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;answer&#x27;</span>, <span class="hljs-attr">sdp</span>: <span class="hljs-keyword">await</span> res.<span class="hljs-title function_">text</span>() });
+<span class="hljs-comment">// 结束：DELETE resourceUrl</span></code></pre></figure><p>统计来自 <code>pc.getStats()</code> 的 <code>inbound-rtp</code>：<code>framesDropped</code>、<code>jitterBufferDelay/jitterBufferEmittedCount</code>。市面上的 WHEP 客户端库大多停更于 2023–2024，自写反而最省心。</p>
+<h3 id="ch03-playercontroller-controller-ts">PlayerController（<code>controller.ts</code>）</h3><figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-title function_">selectPathways</span>(pathways, policy, caps, force?)
+  <span class="hljs-comment">// 按终端能力过滤（whep 需 webrtc；flv 需 MSE/MMS；llhls 需 MSE/MMS/原生 HLS）</span>
+  <span class="hljs-comment">// 排序：force &gt; policy.preferred &gt; priority</span>
+<span class="hljs-title function_">start</span>()
+  <span class="hljs-comment">// 逐条尝试；ready 超时（maxStartupMs×2）或 fatal → recovery_action{switch_pathway|switch_protocol} → 下一条</span>
+  <span class="hljs-comment">// 全部失败 → error{type:&#x27;controller&#x27;, detail:&#x27;all_pathways_failed&#x27;}</span>
+卡顿阶梯（每次 stall_start 前进一步，60s 无卡顿重置）
+  nudge → seek_live → <span class="hljs-title function_">downgrade</span>(<span class="hljs-title function_">setLevel</span>(<span class="hljs-number">0</span>)，30s 后恢复 auto) → switch_pathway → switch_protocol</code></pre></figure><p>每一步都作为 <code>recovery_action</code> 事件进入遥测，所以 Grafana 里能看到&quot;多少会话靠切线路救回来了&quot;。</p>
+<h3 id="ch03-起播的最后一步-谁来调-play">起播的最后一步：谁来调 <code>play()</code></h3><p><code>apps/web/src/hooks/use-player.ts</code> 不用 <code>autoplay</code> 属性，而是在媒体 <code>canplay</code> 时由脚本调用 <code>play()</code>，并在首帧后&quot;解除武装&quot;（换线路时重新武装）。原因有二：<code>play()</code> 早于引擎 attach 会被&quot;new load request&quot;打断；Chrome 会把由 <code>autoplay</code> 属性启动的静音视频在隐藏页签里暂停，脚本 <code>play()</code> 则不会。浏览器拒绝有声播放时退回静音起播并提示点击喇叭。</p>
+<h2 id="ch03-动手实验">动手实验</h2><ol>
+<li><code>/room/demo</code> 按 <code>i</code> 打开 QoE 浮层，点 <code>flv@local-flv</code> / <code>whep@local-rtc</code> 按钮手动切线路，观察 <code>recovery_action</code> 事件与 TTFF 差异。</li>
+<li>停掉 SRS（<code>docker stop livelab-srs</code>）后切到 FLV：观察 fatal → <code>switch_pathway</code> 自动回退。</li>
+<li>在 DevTools → Application → Local Storage 看 <code>livelab.bw</code>：第二次进房的 <code>testBandwidth</code> 会被跳过，起播更快。</li>
+<li>单元测试：<code>pnpm --filter @livelab/player-core test</code>（74 个用例，全部用假引擎与假 RTCPeerConnection，不依赖浏览器媒体能力）。</li>
+</ol>
+<h2 id="ch03-度量">度量</h2><p><code>video.first_frame.ttffMs</code> 按 <code>protocol</code>/<code>cdn</code> 分组；<code>video.recovery_action.action</code> 分布；<code>video.error.err_detail</code> Top N。</p>
+<h2 id="ch03-生产注意事项">生产注意事项</h2><ul>
+<li><strong>锁版本</strong>：hls.js 小版本也会改默认行为（1.7 把 <code>lowLatencyMode</code> 默认打开）；mpegts.js 单人维护、发版间隔长。</li>
+<li><strong>Worker 路径</strong>：Vite 用 <code>import url from &#39;hls.js/dist/hls.worker.js?url&#39;</code>；CDN 部署时确保同源或 CORS。</li>
+<li><strong>iOS</strong>：无 MSE 时走 <code>NativeHlsEngine</code>（<code>&lt;video src=m3u8&gt;</code>），拿不到 hls.js 的统计，用 <code>getVideoPlaybackQuality()</code> 兜底。</li>
+<li><strong>DRM</strong>：hls.js <code>KEY_SYSTEM_*</code> 错误单独归类，别混进网络错误。</li>
+</ul>
+<h2 id="ch03-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>三层分离的理由：UI 库要换（Video.js v10 即将 GA）、引擎要换（MoQ 2027）、指标口径不能变。</li>
+<li>能讲清 hls.js 的致命错误恢复顺序，以及为什么&quot;先自愈一次再切线路&quot;。</li>
+<li>知道 WHEP 请求/响应的三要素：SDP offer、201 + Location、DELETE 释放。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch02">← 02 本地媒体服务器与推流</a>
+    <a class="next" href="#ch04">04 起播速度：把首帧压进 1 秒 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch04" data-num="04">
+  <header class="chapter-head">
+    <span class="eyebrow">第 04 章</span>
+    <h1>起播速度：把首帧压进 1 秒</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch04"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch04-目标">目标</h2><p>理解首帧（TTFF）由哪几段组成，掌握每一段在本项目里的对应优化，并能用数据证明优化有效。</p>
+<h2 id="ch04-原理-首帧的时间线">原理：首帧的时间线</h2><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">用户点击/进房 ──▶ 拿播放地址 ──▶ 建连(DNS+TCP+TLS) ──▶ 下载清单 ──▶ 下载 init + 首个分片 ──▶ 解码 ──▶ 首帧
+   t0            api /play      preconnect 已省掉     LL-HLS 两级清单     part 500ms         硬解</code></pre></figure><p>B 站公开的拆法是&quot;流地址查询 + 网络传输 + 解码&quot;三段；Mux 的口径是 Video Startup Time（意图播放 → 首帧），行业目标 &lt; 2s，优秀 &lt; 1s；阿里云定义&quot;秒开率 = 首帧 ≤ 1000ms 的占比&quot;。本项目在本机的典型值：LL-HLS 270–370ms，FLV 90–480ms，WHEP 540ms。</p>
+<h2 id="ch04-代码走读-每一段对应的优化">代码走读：每一段对应的优化</h2><div class="table-wrap"><table><thead><tr><th>段</th><th>优化</th><th>代码位置</th></tr></thead><tbody><tr><td>拿地址</td><td><code>GET /v1/rooms/:id/play</code> 与房间信息并行请求；<code>staleTime 60s</code> 复用</td><td><code>use-player.ts</code></td></tr><tr><td>建连</td><td><code>&lt;link rel=&quot;preconnect&quot;&gt;</code> 到 8888/8889/8787 三个域</td><td><code>index.html</code></td></tr><tr><td>清单</td><td>服务端 <code>hlsAlwaysRemux: true</code> 预热切片器；part 500ms</td><td><code>infra/mediamtx.yml</code></td></tr><tr><td>首档位</td><td><code>abrEwmaDefaultEstimate</code> 用上次会话的带宽（<code>localStorage[&#39;livelab.bw&#39;]</code>），<code>testBandwidth: false</code> 跳过试探下载</td><td><code>engines/hls.ts</code></td></tr><tr><td>预取</td><td><code>startFragPrefetch: true</code>：attach 之前就开始拉首片</td><td><code>hls-config.ts</code></td></tr><tr><td>缓冲</td><td><code>liveSyncDuration = 3</code>：不必等满 3×TARGETDURATION</td><td><code>hls-config.ts</code></td></tr><tr><td>包体</td><td>引擎 <code>import()</code> 按线路懒加载：只下载用到的那一个</td><td><code>create-engine.ts</code></td></tr><tr><td>解码</td><td>固定 1s GOP、<code>-tune zerolatency</code>，首片即关键帧</td><td><code>infra/pusher/push.sh</code></td></tr><tr><td>起播动作</td><td><code>canplay</code> 立即 <code>play()</code>，不等 <code>canplaythrough</code></td><td><code>use-player.ts</code></td></tr></tbody></table></div><p>一个容易忽视的点：<strong>FLV 快是因为 SRS 的 GOP cache</strong>——新观众立刻收到上一关键帧起的所有帧，首帧几乎不用等；代价是初始延迟高，需要 mpegts.js 的 chasing 追回来。这是&quot;起播速度 vs 延迟&quot;的经典取舍。</p>
+<h2 id="ch04-动手实验">动手实验</h2><ol>
+<li><code>/lab</code> 点&quot;全部重新起播&quot;，三路 TTFF 并排对比，重复 5 次取中位数。</li>
+<li>把 <code>index.html</code> 里的 <code>preconnect</code> 删掉再试，对比 LL-HLS 的 TTFF（本机差异小，跨地域可达 300–500ms）。</li>
+<li>清掉 <code>localStorage[&#39;livelab.bw&#39;]</code>，观察第一次进房 hls.js 是否从低档位起播并多做一次带宽试探（QoE 浮层的 <code>level_switch</code>）。</li>
+<li>弱网面板：延迟 300ms、带宽 1500kbps，再看 TTFF 与首档位选择。</li>
+</ol>
+<h2 id="ch04-度量">度量</h2><ul>
+<li><code>video.first_frame.ttffMs</code>：Grafana &quot;起播 TTFF p50/p95&quot; 面板；秒开率 = <code>countIf(value_ms &lt;= 1000) / count()</code>。</li>
+<li>按 <code>cdn</code>、<code>protocol</code>、<code>browser</code>、<code>net_type</code> 下钻（&quot;按 CDN/协议/网络&quot;看板）。</li>
+<li>EBVS（Exit Before Video Start）：有 <code>play_attempt</code>、无 <code>first_frame</code>、无 fatal、停留 ≥1s 就离开——起播慢的直接业务后果。</li>
+</ul>
+<h2 id="ch04-生产注意事项">生产注意事项</h2><ul>
+<li>播放地址接口要走就近节点并可缓存（302 调度/HTTPDNS），否则&quot;拿地址&quot;这一段在跨境时就是 200ms+。</li>
+<li>CMAF/fMP4 优于 TS：LL-HLS Partial Segment 实践上要求 fMP4，且省掉 transmux。</li>
+<li>海报图作为 LCP 元素，视频首帧不要成为页面 LCP。</li>
+<li>把 <code>abrEwmaDefaultEstimate</code> 的来源从 localStorage 升级为服务端按地区/ISP 下发的先验值。</li>
+</ul>
+<h2 id="ch04-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>能把 TTFF 拆成 5 段并各给一个优化手段。</li>
+<li>知道 GOP cache 的两面性。</li>
+<li>秒开率、EBVS 的定义与计算 SQL。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch03">← 03 播放器内核适配层：hls.js / mpegts.js / WHEP</a>
+    <a class="next" href="#ch05">05 卡顿率、弱网与跨境播放策略 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch05" data-num="05">
+  <header class="chapter-head">
+    <span class="eyebrow">第 05 章</span>
+    <h1>卡顿率、弱网与跨境播放策略</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch05"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch05-目标">目标</h2><p>给出可度量的卡顿定义，理解播放器侧的&quot;恢复阶梯&quot;，用弱网代理复现并验证每一级恢复动作。</p>
+<h2 id="ch05-原理">原理</h2><h3 id="ch05-卡顿怎么定义才不打架">卡顿怎么定义才不打架</h3><div class="table-wrap"><table><thead><tr><th>口径</th><th>定义</th><th>本项目</th></tr></thead><tbody><tr><td>Mux Rebuffering %</td><td>卡顿态时长 ÷ 总观看时长</td><td><code>stall_end.durationMs</code> 求和 ÷ <code>heartbeat.playingMs</code> 求和</td></tr><tr><td>Conviva</td><td>排除首帧前缓冲与暂停；≥200ms 微卡顿计入</td><td>QoE 探针：首帧前的 <code>waiting</code> 不算；seek/暂停期间不算；≥200ms 才算</td></tr><tr><td>阿里云&quot;百秒卡顿时长&quot;</td><td>(卡顿总秒 ÷ 观看总秒) × 100</td><td>Grafana 面板同名</td></tr><tr><td>字节&quot;卡顿人头&quot;</td><td>累计卡顿占比 ≥5% 的用户 ÷ 总用户</td><td>可由 view 级聚合得到</td></tr></tbody></table></div><p>探针实现（<code>packages/player-core/src/qoe-probe.ts</code>）：<code>waiting</code> 事件启动 200ms 定时器，超时才发 <code>stall_start</code>；<code>playing</code> 结束并计算 <code>durationMs</code>；同时接受引擎级 <code>stall_start</code>（如 WebRTC <code>disconnected</code>）。</p>
+<h3 id="ch05-弱网下各协议的行为">弱网下各协议的行为</h3><ul>
+<li><strong>LL-HLS / FLV（TCP）</strong>：丢包表现为重传 → 到达变慢 → 缓冲耗尽 → 卡顿；有几秒缓冲兜底。</li>
+<li><strong>WebRTC（UDP）</strong>：NACK/FEC 抗丢包，延迟不涨但画质降、可能花屏；持续 30% 丢包仍可播（阿里云 RTS 宣称）。</li>
+<li>策略：互动房间 WebRTC 优先、失败降级 LL-HLS；大盘观众 LL-HLS/FLV；最低档保留纯音频。</li>
+</ul>
+<h3 id="ch05-恢复阶梯">恢复阶梯</h3><figure class="code" data-lang="text"><div class="code-bar"><span>text</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">stall #1 → nudge（currentTime += 0.1，跨过缓冲空洞）
+stall #2 → seek_live（丢弃积压，贴回 live edge）
+stall #3 → downgrade（setLevel(0)，30s 后恢复 auto）
+stall #4 → switch_pathway（换 CDN/线路，同协议）
+stall #5 → switch_protocol（LL-HLS → FLV → WHEP …）
+60s 无卡顿 → 阶梯归零</code></pre></figure><p>阶梯是 <code>policy.stallLadder</code>，由服务端按房间下发，运营可调。</p>
+<h3 id="ch05-跨境">跨境</h3><p>跨境的本质是 RTT 高、丢包随时段波动、部分 CDN 在某些 ISP 表现差。前端能做的：</p>
+<ol>
+<li><strong>多 pathway + 客户端切换</strong>（本项目的 <code>switch_pathway</code>），配合服务端按地理/ISP 调度返回的顺序。</li>
+<li><strong>HLS Content Steering</strong>：hls.js 原生支持，steering server 返回 pathway 优先级 JSON，秒级切换且不丢缓冲。</li>
+<li><strong>上报 QoE 维度</strong>：<code>cdn</code>、<code>region</code>、<code>isp</code>，让调度服务有数据依据（快手用 Flink 实时调 CDN 配比的思路）。</li>
+</ol>
+<h2 id="ch05-代码走读-弱网代理">代码走读：弱网代理</h2><p><code>apps/api/src/modules/weaknet/routes.ts</code>：<code>GET /weaknet?u=&lt;上游&gt;&amp;delay=&amp;loss=&amp;bw=</code>。</p>
+<ul>
+<li><code>delay</code>：首字节前睡眠，模拟 RTT。</li>
+<li><code>loss</code>：对<strong>分片</strong>按概率返回 503，<strong>清单永不丢</strong>——丢清单会让播放器死等，丢分片才能触发我们要研究的重试路径。</li>
+<li><code>bw</code>：令牌桶限速（50ms tick）。</li>
+<li><code>.m3u8</code> 响应体重写：每个 URI（含 <code>URI=&quot;…&quot;</code> 属性、<code>#EXT-X-MAP</code>/<code>#EXT-X-PART</code>/<code>#EXT-X-PRELOAD-HINT</code>）都改回 <code>/weaknet?u=…</code>，并保留 <code>?session=</code> 与 <code>_HLS_msn</code> 等查询参数。</li>
+</ul>
+<p>播放器通过 <code>EngineOptions.requestTransform</code> 把所有媒体请求改写到代理（hls.js 的 <code>fetchSetup/xhrSetup</code>；mpegts.js 只改起始 URL）。WebRTC 走 UDP 不经 HTTP，用 Chrome DevTools 或 macOS Network Link Conditioner。</p>
+<h2 id="ch05-动手实验">动手实验</h2><ol>
+<li><code>/lab</code> LL-HLS 面板：丢包 30%，重新起播。观察 QoE 浮层：<code>error network/fragLoadError</code>（非致命，hls.js 自己重试）→ 偶发 <code>stall_start/stall_end</code> → 阶梯动作。</li>
+<li>带宽 800kbps：观察 <code>level_switch → L0</code>（ABR 降到 360p），延迟是否稳定。</li>
+<li>延迟 2000ms：LL-HLS 的阻塞式清单刷新对高 RTT 更敏感，看 <code>latency</code> 是否涨、<code>rate 1.5x</code> 是否追回。</li>
+<li>停掉 MediaMTX 里的 <code>demo_360</code>（改 <code>push.sh</code> 只推两路）观察 ABR 主清单 503 → <code>switch_pathway</code> 到 <code>local-a</code>。</li>
+</ol>
+<h2 id="ch05-度量">度量</h2><ul>
+<li>百秒卡顿时长、卡顿会话占比、卡顿用户率（≥5%）。</li>
+<li><code>recovery_action</code> 分布：哪一级救回了多少会话。</li>
+<li>按 <code>weaknet</code> 属性（<code>delay/loss/bw</code>）分组对比：这就是 A/B 实验的雏形。</li>
+</ul>
+<h2 id="ch05-生产注意事项">生产注意事项</h2><ul>
+<li>卡顿的口径要与后端/数据团队对齐并写进文档；不同口径的数字不可比。</li>
+<li>追帧速率 1.5x 在有声内容上会明显变调，带货/秀场建议 1.05–1.1；本项目为教学取 1.5。</li>
+<li>Network Information API 只有 Chromium 支持，<code>net_type</code> 在 Safari 上恒为 unknown。</li>
+<li>跨境切换要配合服务端调度，避免所有客户端同时切到同一条备线。</li>
+</ul>
+<h2 id="ch05-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>三种卡顿口径的差异与你项目采用的定义。</li>
+<li>恢复阶梯每一级的适用场景，为什么 nudge 在最前、切协议在最后。</li>
+<li>弱网代理为什么不丢清单。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch04">← 04 起播速度：把首帧压进 1 秒</a>
+    <a class="next" href="#ch06">06 弹幕渲染引擎 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch06" data-num="06">
+  <header class="chapter-head">
+    <span class="eyebrow">第 06 章</span>
+    <h1>弹幕渲染引擎</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch06"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch06-目标">目标</h2><p>用 Canvas 实现一个能扛住每秒几十条、掉帧不堆积、后台不耗电的弹幕层，并理解轨道分配算法。</p>
+<h2 id="ch06-原理">原理</h2><h3 id="ch06-dom-还是-canvas">DOM 还是 Canvas</h3><div class="table-wrap"><table><thead><tr><th>方案</th><th>优点</th><th>缺点</th><th>适用</th></tr></thead><tbody><tr><td>DOM + <code>transform: translate3d</code> + <code>will-change</code></td><td>文本可选、可点击、无障碍</td><td>每条弹幕一个合成层，数百条以上掉帧</td><td>互动弹幕（点赞、回复）</td></tr><tr><td>Canvas + rAF</td><td>单层、上千条无压力</td><td>不可选中；需自绘描边</td><td>直播主弹幕层（本项目）</td></tr><tr><td>OffscreenCanvas + Worker</td><td>主线程被 React 卡住也不掉帧</td><td>兼容性、消息开销</td><td>超热房间（&gt;500 条/秒）</td></tr></tbody></table></div><h3 id="ch06-轨道分配-packages-danmaku-src-lanes-ts">轨道分配（<code>packages/danmaku/src/lanes.ts</code>）</h3><p>每条弹幕以恒定时长 <code>durationMs</code> 横穿舞台，所以 <strong>越宽的弹幕越快</strong>：<code>speed = (stageWidth + width) / (durationMs / 1000)</code>。</p>
+<p>某条轨道对新弹幕 N 可用，需同时满足：</p>
+<ol>
+<li>上一条 P 已完全进入舞台：<code>lastRight &lt;= stageWidth</code>，其中 <code>lastRight = stageWidth + lastWidth − lastSpeed × elapsed</code>；</li>
+<li>N 不会在 P 离场前追上它：若 <code>speed &gt; lastSpeed</code>，令 <code>gap = stageWidth − lastRight</code>，追上用时 <code>tc = gap / (speed − lastSpeed)</code>，P 离场用时 <code>tl = lastRight / lastSpeed</code>，要求 <code>tc ≥ tl</code>。</li>
+</ol>
+<p>取最小可用轨道索引；没有则返回 -1（进入待发队列或按限流丢弃）。这与 weizhenye/Danmaku 的策略一致，是各家实现的公约数。</p>
+<h3 id="ch06-帧循环里的三条规矩">帧循环里的三条规矩</h3><ul>
+<li>用 <code>dt = now − last</code> 推进位置，<code>dt</code> 钳到 100ms；<code>dt &gt; 100ms</code>（切页/卡顿回来）时<strong>丢弃积压队列</strong>而不是一口气全画出来。</li>
+<li><code>document.hidden</code> 时暂停 rAF 并清空队列；回前台不补发——观众不需要看过去 30 秒的弹幕。</li>
+<li>每秒上屏上限（<code>maxPerSecond</code>），超限的普通弹幕直接丢并计数；礼物/系统消息（<code>priority 2</code>）永不丢。</li>
+</ul>
+<h3 id="ch06-与-react-的边界">与 React 的边界</h3><p><code>DanmakuLayer</code> 用 <code>useRoomStore.subscribe</code> 在 React 渲染循环之外消费消息：每 150ms 一批 IM 消息变成几次 <code>emit()</code>，不会触发覆盖层组件重渲染。重挂载时从 store 里最新的 <code>seq</code> 开始，不重放历史。</p>
+<h2 id="ch06-代码走读">代码走读</h2><figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-comment">// packages/danmaku/src/index.ts</span>
+<span class="hljs-keyword">const</span> handle = <span class="hljs-title function_">createDanmaku</span>(canvas, { <span class="hljs-attr">laneHeight</span>: <span class="hljs-number">34</span>, <span class="hljs-attr">durationMs</span>: <span class="hljs-number">8000</span>, <span class="hljs-attr">maxPerSecond</span>: <span class="hljs-number">25</span>, <span class="hljs-attr">area</span>: <span class="hljs-number">0.5</span> });
+handle.<span class="hljs-title function_">emit</span>({ id, text, color, <span class="hljs-attr">size</span>: <span class="hljs-string">&#x27;md&#x27;</span>, <span class="hljs-attr">priority</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">border</span>: <span class="hljs-literal">false</span> });
+handle.<span class="hljs-title function_">pause</span>(); handle.<span class="hljs-title function_">resume</span>(); handle.<span class="hljs-title function_">resize</span>(); handle.<span class="hljs-title function_">setOptions</span>({ <span class="hljs-attr">area</span>: <span class="hljs-number">1</span> }); handle.<span class="hljs-title function_">destroy</span>();
+handle.<span class="hljs-property">stats</span> <span class="hljs-comment">// { onScreen, dropped, emitted }</span></code></pre></figure><p><code>renderer-core.ts</code> 与画布/DOM 无关（接受 <code>HTMLCanvasElement | OffscreenCanvas</code> 和注入的 <code>now/raf</code>），因此单元测试可以精确地驱动帧；<code>worker.ts</code> 把同一核心放进 Worker（<code>new Worker(new URL(&#39;./danmaku.worker.ts&#39;, import.meta.url), { type: &#39;module&#39; })</code>），不支持 OffscreenCanvas 时自动回退主线程。</p>
+<p>文本宽度测量是 Canvas 弹幕最大的 CPU 开销，用 <code>Map</code> 缓存（上限 2000 条 FIFO）。描边 + 填充两次绘制保证在任何画面上可读。</p>
+<h2 id="ch06-动手实验">动手实验</h2><ol>
+<li>直播间弹幕密度切到&quot;多&quot;，用另一个浏览器窗口登录第二个账号刷屏，看右下角&quot;弹幕 N · 丢弃 M&quot;。</li>
+<li>切到别的标签页 10 秒再回来：弹幕不会补发。</li>
+<li><code>pnpm --filter @livelab/danmaku test</code>：看 <code>lanes.test.ts</code> 里追尾判定的四个分支。</li>
+<li>把 <code>durationMs</code> 改成 4000（更快）与 16000（更慢），体会&quot;恒定时长&quot;模型对拥挤度的影响。</li>
+</ol>
+<h2 id="ch06-度量">度量</h2><p>前端埋点可上报 <code>danmaku.dropped / emitted</code> 与 <code>onScreen</code> 峰值（本项目在覆盖层左下角展示）。</p>
+<h2 id="ch06-生产注意事项">生产注意事项</h2><ul>
+<li>弹幕字体要预加载（<code>font-display: swap</code> 会让首批弹幕用回退字体测量宽度，导致重叠）。</li>
+<li>高分屏用 <code>devicePixelRatio</code> 缩放画布，否则模糊。</li>
+<li>移动端把 <code>area</code> 限制在 0.25–0.5，避免遮住商品/主播。</li>
+<li>高级弹幕（定位、逆向、彩色描边）用 DOM 层单独渲染。</li>
+</ul>
+<h2 id="ch06-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>追尾判定公式与推导。</li>
+<li><code>dt</code> 钳制与丢弃积压的原因。</li>
+<li>为什么弹幕层不走 React state。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch05">← 05 卡顿率、弱网与跨境播放策略</a>
+    <a class="next" href="#ch07">07 IM 网关与弹幕协议 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch07" data-num="07">
+  <header class="chapter-head">
+    <span class="eyebrow">第 07 章</span>
+    <h1>IM 网关与弹幕协议</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch07"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch07-目标">目标</h2><p>设计并实现一个&quot;断线能续、热门房间不炸、多实例可扩&quot;的房间消息通道，并理解每个设计点在百万连接场景下对应的取舍。</p>
+<h2 id="ch07-原理-大厂怎么做">原理：大厂怎么做</h2><ul>
+<li><strong>Twitch</strong>：Edge（长连接）+ Pubsub 树状扇出，日均数千亿条消息。</li>
+<li><strong>B 站 goim</strong>：Comet（只管长连）/ Logic（鉴权路由）/ Job（消费 Kafka 按房间推）；弹幕协议 16 字节头 + 30s 心跳 + body zlib/brotli。</li>
+<li><strong>美拍</strong>：大房间按时间窗和条数收紧，房间过大时从&quot;定向通知&quot;降级为&quot;广播&quot;。</li>
+</ul>
+<p>抽象出来是四条规律：<strong>接入层无业务、消息有序号、下行要批处理、大房间要抽样</strong>。本项目用 TypeScript 在一个 Fastify 进程里实现了这四条（<code>apps/api/src/modules/im/</code>），Redis 作扇出总线后可多实例。</p>
+<h2 id="ch07-协议-packages-protocol-src-im-ts">协议（<code>packages/protocol/src/im.ts</code>）</h2><figure class="code" data-lang="text"><div class="code-bar"><span>text</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">客户端 → 服务端                     服务端 → 客户端
+hello { room, lastSeq? }            welcome { seq, state, history[] }
+ping  { ts }                        pong { ts, serverTs }
+chat  { cid, text }                 batch { msgs[] }         ← 每 150ms 一帧
+like  { n }                         state { ...partial }     ← 置顶/公告/慢速/投票/在线数
+vote  { pollId, option }            error { code, message, retryAfterMs?, cid? }</code></pre></figure><p>每条 <code>ServerMsg</code> 带房间内单调递增的 <code>seq</code> 与 <code>lane</code>（<code>chat | gift | system</code>）。zod schema 是前后端唯一真相，服务端对每个入站帧 <code>safeParse</code>，非法帧回 <code>error{bad_frame}</code> 而不断连。</p>
+<p>关闭码：4401 未鉴权、4400 5s 内无 <code>hello</code>、4404 房间不存在、4408 60s 无 <code>ping</code>。</p>
+<h2 id="ch07-代码走读">代码走读</h2><h3 id="ch07-有序与续传-history-ts-hub-ts">有序与续传（<code>history.ts</code> + <code>hub.ts</code>）</h3><ul>
+<li><code>seq</code> 由内存计数器或 Redis <code>INCR seq:&lt;room&gt;</code> 产生；每条消息进 <code>hist:&lt;room&gt;</code> 环形历史（500 条）。</li>
+<li><code>hello.lastSeq</code> 存在 → <code>welcome.history</code> 返回 <code>seq &gt; lastSeq</code> 的消息（最多 200）；不存在 → 最近 50 条。</li>
+<li>连接先注册、再读历史，并丢弃队列里 <code>seq &lt;= welcome.seq</code> 的项，保证<strong>不丢不重</strong>。</li>
+<li>客户端 <code>im-client.ts</code> 记录见过的最大 <code>seq</code>，重连时带上；指数退避 1s→20s + 0–500ms 抖动，避免网关重启后的重连风暴。</li>
+</ul>
+<h3 id="ch07-批处理与抽样-hub-ts-sampling-ts">批处理与抽样（<code>hub.ts</code> + <code>sampling.ts</code>）</h3><ul>
+<li>每个连接一个出站队列，每 150ms 合成<strong>一个</strong> <code>batch</code> 帧；前端 <code>applyFrame</code> 一次 <code>set</code>，React 每 150ms 最多渲染一次。</li>
+<li>队列上限 200：超限先丢最旧的 <code>chat</code>，永不丢 <code>gift</code>/<code>system</code>。</li>
+<li>抽样率按在线人数分档：&lt;100 → 100%，&lt;1000 → 50%，&lt;10000 → 20%，其余 5%；只抽 <code>chat</code> 车道。</li>
+<li><code>system{join}</code> 只在在线 &lt;100 的房间广播；<code>system{online}</code> 每房间每 2s 最多一次。</li>
+</ul>
+<h3 id="ch07-治理-moderation-ts">治理（<code>moderation.ts</code>）</h3><p><code>canPost</code> 顺序：封禁 → 禁言 → 慢速模式（按用户记上次发言时间）→ 频率限制（5 条/10s）；主播/管理员跳过后两项。关键词过滤大小写不敏感，命中替换为 <code>***</code>，整条即关键词时拒绝（<code>error{filtered}</code>）。状态持久化在 SQLite <code>mod_state</code>。</p>
+<h3 id="ch07-点赞聚合-likes-ts">点赞聚合（<code>likes.ts</code>）</h3><p>客户端 500ms 合并点击发 <code>like{n}</code>；服务端每房间每秒合成一个 <code>like_agg{count,total}</code>；前端用 <code>count</code> 触发飘心动画、<code>total</code> 显示。两级聚合把最高频的交互压到每秒一条消息。</p>
+<h3 id="ch07-扇出总线-bus-ts">扇出总线（<code>bus.ts</code>）</h3><p><code>Bus.publish/subscribe</code>：内存实现用于单实例；Redis 实现 <code>PUBLISH room:&lt;id&gt;</code>，每个实例订阅并投递给本地连接。<code>REDIS_URL</code> 可达时自动选 Redis（2s 探测），否则回退内存并打日志。</p>
+<h2 id="ch07-动手实验">动手实验</h2><ol>
+<li>两个浏览器登录不同账号进同一房间，发消息、点赞，观察 150ms 批量到达与 <code>like_agg</code>。</li>
+<li>断网重连：DevTools → Network → Offline 10 秒后恢复，聊天区显示&quot;第 N 次重连&quot;，恢复后补齐漏掉的消息（对比另一窗口）。</li>
+<li>主播台开慢速模式 10s，用观众账号连发两条，第二条得到 <code>error{slow_mode, retryAfterMs}</code> 与输入框倒计时。</li>
+<li><code>wscat -c &#39;ws://localhost:8787/ws?room=demo&amp;token=&lt;jwt&gt;&#39;</code> 手工发 <code>{&quot;t&quot;:&quot;hello&quot;,&quot;room&quot;:&quot;demo&quot;}</code> 看 <code>welcome</code>。</li>
+</ol>
+<h2 id="ch07-度量">度量</h2><p>管理后台 <code>msgRate</code>（60s 滑窗）；服务端可补充每连接队列丢弃计数、批帧大小分布。</p>
+<h2 id="ch07-生产注意事项">生产注意事项</h2><ul>
+<li>生产替代：<strong>Centrifugo v6</strong>（channels/presence/history/JWT、offset+epoch 续传、WebTransport 回退）+ Node 业务服务通过 HTTP API 发布；或保留本实现并把 <code>bus</code>/<code>history</code> 换成 Kafka/Redis Streams。</li>
+<li>单连接 JSON 帧在百万连接下带宽可观：上 binary + brotli（B 站做法），协议层保持不变。</li>
+<li>在线数、<code>state</code> 帧目前是单实例内存；多实例需把在线态放 Redis（HLL/ZSET）。</li>
+<li>鉴权 token 走 query 会进日志，生产改 <code>Sec-WebSocket-Protocol</code> 或首帧携带。</li>
+</ul>
+<h2 id="ch07-面试-复盘要点">面试/复盘要点</h2><ul>
+<li><code>seq</code> + <code>lastSeq</code> 续传为什么不丢不重（先注册后读史 + 去重）。</li>
+<li>批帧 150ms 与抽样分档的数值依据。</li>
+<li>两级点赞聚合。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch06">← 06 弹幕渲染引擎</a>
+    <a class="next" href="#ch08">08 主播互动：点赞、礼物动画、投票、置顶、公告、连麦 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch08" data-num="08">
+  <header class="chapter-head">
+    <span class="eyebrow">第 08 章</span>
+    <h1>主播互动：点赞、礼物动画、投票、置顶、公告、连麦</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch08"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch08-目标">目标</h2><p>把互动从&quot;消息&quot;变成&quot;体验&quot;：每种互动在协议、状态、渲染三层各落在哪里，以及热门房间如何不被互动拖垮。</p>
+<h2 id="ch08-原理-互动的三种形态">原理：互动的三种形态</h2><div class="table-wrap"><table><thead><tr><th>形态</th><th>例子</th><th>传输</th><th>渲染</th></tr></thead><tbody><tr><td>高频低价值</td><td>点赞</td><td>两级聚合（客户端 500ms、服务端 1s）</td><td>飘心动画用聚合数驱动</td></tr><tr><td>低频高价值</td><td>礼物</td><td><code>gift</code> 车道，永不抽样/丢弃，REST 下单 + WS 广播</td><td>动画队列，大礼物插队</td></tr><tr><td>状态型</td><td>置顶、公告、投票、慢速、连麦</td><td><code>state</code> 帧（全量/增量），不进历史</td><td>直接绑定 UI</td></tr></tbody></table></div><p>平台参考：TikTok LIVE Multi-guest（5 人）与 Co-host（3 主播）；B 站 PK/天选/红包；YouTube Super Chat 置顶；Twitch Slow/Followers-only/Shield Mode。</p>
+<h2 id="ch08-代码走读">代码走读</h2><h3 id="ch08-点赞-components-chat-like-button-tsx">点赞（<code>components/chat/like-button.tsx</code>）</h3><p>客户端只做两件事：累加点击、每 500ms 发一次 <code>like{n}</code>；动画由 <code>like_agg.count</code> 触发（<code>likeBurst</code> 递增），所以所有人看到的是&quot;房间在热起来&quot;，而不只是自己的点击。</p>
+<h3 id="ch08-礼物动画-components-gifts-animations-ts-gift-layer-tsx">礼物动画（<code>components/gifts/animations.ts</code> + <code>gift-layer.tsx</code>）</h3><ul>
+<li>动画是纯函数 <code>(ctx, t∈[0,1], w, h, seed) =&gt; void</code>，可重放、可测试、可搬进 Worker。三种内置：<code>hearts</code>、<code>confetti</code>、<code>rocket</code>。</li>
+<li><code>createGiftQueue({ maxConcurrent: 2, bigPrice: 500 })</code>：价格 ≥500 的礼物插到所有小礼物之前，最多同时播两个；有单元测试。</li>
+<li><code>GiftLayer</code> 订阅 store 的 <code>lastGift</code>（不经 React 渲染），rAF 循环只在有动画时运行。</li>
+<li>生产格式：默认 <strong>SVGA</strong>（压缩 85–90%），大礼物/3D 用 <strong>alpha-MP4</strong>（VAP/YYEVA），轻量特效 Lottie；把 <code>GiftDrawFn</code> 换成对应播放器即可，队列逻辑不变。</li>
+</ul>
+<h3 id="ch08-投票-interaction-routes-ts-poll-panel-tsx-直播间-pollcard">投票（<code>interaction/routes.ts</code> + <code>poll-panel.tsx</code> + 直播间 <code>PollCard</code>）</h3><p>主播 <code>POST /v1/rooms/:id/mod {action:&#39;poll_start&#39;, question, options, seconds}</code> → 服务端持有 <code>Poll</code>、广播 <code>system{poll}</code> + <code>state{poll}</code> → 观众 <code>vote{pollId, option}</code>（每人一票）→ <code>state{poll}</code> 增量更新票数 → 到时或手动 <code>poll_end</code>。</p>
+<h3 id="ch08-置顶与公告">置顶与公告</h3><p><code>pin</code> 从历史里按 <code>msgId</code> 找到消息放进 <code>state.pinned</code>；<code>announce</code> 写 <code>state.announce</code> 并广播 <code>system{announce}</code>（弹幕层用蓝色描边条显示）。两者都是&quot;状态&quot;，新进房的观众从 <code>welcome.state</code> 直接拿到。</p>
+<h3 id="ch08-连麦-co-host-信令">连麦（co-host）信令</h3><p>流程：观众请求 → 主播接受 → 服务端广播 <code>system{cohost, payload:{userId, path, state}}</code> → 观众浏览器 <code>getUserMedia</code> + WHIP 推到 <code>http://localhost:8889/cohost/&lt;room&gt;/&lt;user&gt;/whip</code> → 其他人用 <code>WhepEngine</code> 播这一路作画中画 → 结束清理。信令走同一条 WebSocket，媒体走 WebRTC。本项目实现了协议里的 <code>cohost</code> 系统消息与 WHIP/WHEP 两端引擎；完整的连麦 UI 是留给读者的扩展练习（<code>WhepClient</code> 反过来就是 WHIP 客户端）。</p>
+<h2 id="ch08-动手实验">动手实验</h2><ol>
+<li>主播台发起投票，观众端投票，看票数实时变化与 60s 自动结束。</li>
+<li>连送 5 个玫瑰再送 1 个火箭：火箭插队先播。</li>
+<li>主播台&quot;置顶其最新消息&quot;，新开一个窗口进房，置顶条在 <code>welcome</code> 后立即出现。</li>
+<li>用 OBS WHIP 推一路到 <code>live/demo</code>，体验浏览器外的&quot;连麦上麦&quot;。</li>
+</ol>
+<h2 id="ch08-度量">度量</h2><p>礼物：<code>gift_orders</code> 表即流水；互动率 = 有互动的 view ÷ 总 view（可从 IM 侧埋点）。</p>
+<h2 id="ch08-生产注意事项">生产注意事项</h2><ul>
+<li>礼物广播失败不能影响下单成功：本项目 <code>broadcast</code> 是 fire-and-forget 并记日志。</li>
+<li>动画层要限并发与总时长，否则&quot;火箭雨&quot;会把低端机拖垮。</li>
+<li>连麦要处理回声消除、上麦权限、举报与一键下麦。</li>
+</ul>
+<h2 id="ch08-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>三种互动形态各自的传输与渲染策略。</li>
+<li>礼物动画队列的插队规则。</li>
+<li>连麦信令与媒体分离。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch07">← 07 IM 网关与弹幕协议</a>
+    <a class="next" href="#ch09">09 付费与钱包：Mock 支付、签名 Webhook、幂等、双式账本 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch09" data-num="09">
+  <header class="chapter-head">
+    <span class="eyebrow">第 09 章</span>
+    <h1>付费与钱包：Mock 支付、签名 Webhook、幂等、双式账本</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch09"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch09-目标">目标</h2><p>实现一个&quot;客户端永远不决定已支付&quot;的付费链路，并能在本地复现支付里最常见的三个坑：Webhook 迟到、重复投递、并发扣减。</p>
+<h2 id="ch09-原理">原理</h2><figure class="code" data-lang="text"><div class="code-bar"><span>text</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">充值：下单 → 收银台(Stripe Checkout / 支付宝H5 / 微信H5) → 提供方回调 Webhook(签名) → 验签 → 幂等入账 → 账本
+送礼：POST /v1/gifts (Idempotency-Key) → 服务端查价 → 事务：余额&gt;=价格才扣 → 账本 → 礼物订单 → 广播</code></pre></figure><ul>
+<li><strong>Stripe 2026</strong>：Checkout 与 Payment Element 合并为 Checkout Sessions API（<code>ui_mode</code>: hosted/embedded/elements），只需监听 <code>checkout.session.completed</code>。</li>
+<li><strong>支付宝手机网站支付</strong>：表单跳转 + 回跳；<strong>微信 H5</strong>：仅限手机浏览器（非微信内），后端下单拿 <code>h5_url</code>。</li>
+<li>共同点：<strong>最终状态来自服务端回调</strong>，前端只能轮询订单状态。</li>
+</ul>
+<h2 id="ch09-代码走读-apps-api-src-modules-wallet-pay-mock-gifts">代码走读（<code>apps/api/src/modules/wallet|pay-mock|gifts</code>）</h2><h3 id="ch09-订单与钱包">订单与钱包</h3><p>1 金币 = 10 分。<code>POST /v1/wallet/recharge {coins}</code> 创建 <code>orders(created)</code>，返回 <code>payUrl: /pay/mock/&lt;id&gt;</code>；订单 15 分钟未支付惰性转 <code>expired</code>。</p>
+<h3 id="ch09-mock-收银台-routes-pay-mock-tsx-pay-mock-deliver-ts">Mock 收银台（<code>routes/pay-mock.tsx</code> + <code>pay-mock/deliver.ts</code>）</h3><p>点击&quot;支付成功&quot;后 api 扮演支付提供方：随机延迟 0–3s 投递 Webhook，<strong>30% 概率再投一次</strong>，非 2xx 重试 3 次。Webhook 体：</p>
+<figure class="code" data-lang="json"><div class="code-bar"><span>json</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;eventId&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;evt_…&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;orderId&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ord_…&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;status&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;paid&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;signature&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;HMAC-SHA256(secret, eventId.orderId.status)&quot;</span> <span class="hljs-punctuation">}</span></code></pre></figure><h3 id="ch09-幂等入账-wallet-service-ts-applypaymentevent">幂等入账（<code>wallet/service.ts#applyPaymentEvent</code>）</h3><figure class="code" data-lang="text"><div class="code-bar"><span>text</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">验签失败 → 'invalid'（400）
+事务内：payment_events 已有 eventId → 'duplicate'（200，什么都不做）
+        插入 eventId；订单 created→paid；钱包 +coins；账本两条（platform_cash −，user_wallet:&lt;uid&gt; +）
+→ 'applied'</code></pre></figure><p>唯一键是<strong>提供方的事件 ID</strong>，不是订单 ID——同一订单可能有多个事件（支付成功、退款）。</p>
+<h3 id="ch09-扣减与送礼-wallet-service-ts-debit-gifts-routes-ts">扣减与送礼（<code>wallet/service.ts#debit</code> + <code>gifts/routes.ts</code>）</h3><ul>
+<li>价格<strong>永远</strong>由服务端目录决定（<code>GIFTS</code>），客户端只传 <code>giftId, count</code>。</li>
+<li><code>Idempotency-Key</code> 请求头必填；<code>gift_orders(user_id, idem_key)</code> 唯一，重放返回同一个 <code>msgId</code>，不重复扣款、不重复广播。</li>
+<li>扣减用一条 SQL 保证不透支：<code>UPDATE wallets SET balance = balance - ? WHERE user_id = ? AND balance &gt;= ?</code>，<code>changes === 0</code> 即余额不足（402）。</li>
+<li>账本：<code>user_wallet:&lt;uid&gt;</code> −amount、<code>creator_earnings:&lt;hostId&gt;</code> +amount，同一 <code>tx_id</code>，任何时刻 Σdelta = 0。</li>
+</ul>
+<h3 id="ch09-前端乐观更新-gift-panel-tsx">前端乐观更新（<code>gift-panel.tsx</code>）</h3><p>TanStack Query <code>useMutation</code> 的 <code>onMutate</code> 先扣本地余额，<code>onError</code> 回滚并在 402 时打开充值框，<code>onSuccess</code> 用服务端返回的 <code>balance</code> 覆盖。每次点击生成一个新的 <code>Idempotency-Key</code>，网络重试复用同一个 key。</p>
+<h2 id="ch09-动手实验">动手实验</h2><ol>
+<li>充值 500 → Mock 收银台 → &quot;支付成功&quot; → 观察状态在 0–3s 后变 paid；api 日志里偶尔会看到第二次投递返回 <code>duplicate</code>。</li>
+<li>用 curl 伪造 Webhook（签名错误）→ 400 invalid。</li>
+<li>把礼物面板的赠送按钮连点两次（同一 key）→ 只扣一次。</li>
+<li>余额 5 金币送 10 个玫瑰 → 402，余额本地回滚，弹出充值。</li>
+<li><code>pnpm --filter @livelab/api test -- src/modules/wallet</code>。</li>
+</ol>
+<h2 id="ch09-度量">度量</h2><p><code>ledger_entries</code> 按账户汇总应恒为 0；<code>payment_events</code> 中 duplicate 比例反映提供方投递质量。</p>
+<h2 id="ch09-生产注意事项">生产注意事项</h2><ul>
+<li>接入 Stripe：把 <code>pay-mock</code> 换成 Checkout Session 创建 + <code>stripe.webhooks.constructEvent</code> 验签，其余不变。</li>
+<li>反欺诈：每用户送礼速率限制、异常金额告警、退款事件的反向账本。</li>
+<li>钱包与账本放同一事务；跨服务时用 outbox 模式发广播。</li>
+<li>金额用整数（分/金币），永远不用浮点。</li>
+</ul>
+<h2 id="ch09-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>幂等键选什么、放哪一层。</li>
+<li>余额校验为什么必须在 UPDATE 的 WHERE 里。</li>
+<li>乐观更新的回滚路径。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch08">← 08 主播互动：点赞、礼物动画、投票、置顶、公告、连麦</a>
+    <a class="next" href="#ch10">10 运营工具：主播控制台与管理后台 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch10" data-num="10">
+  <header class="chapter-head">
+    <span class="eyebrow">第 10 章</span>
+    <h1>运营工具：主播控制台与管理后台</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch10"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch10-目标">目标</h2><p>理解运营工具的两个用户（主播、平台运营）分别需要哪些&quot;实时&quot;数据，以及这些数据从哪条链路来。</p>
+<h2 id="ch10-原理-运营工具是数据的-汇聚层">原理：运营工具是数据的&quot;汇聚层&quot;</h2><div class="table-wrap"><table><thead><tr><th>数据</th><th>来源</th><th>刷新方式</th><th>页面</th></tr></thead><tbody><tr><td>推流健康度（是否在推、轨道、入站字节、观看连接）</td><td>MediaMTX API <code>/v3/paths/get/live/&lt;path&gt;</code></td><td>api 缓存 2s，前端每 2s 轮询</td><td>主播台</td></tr><tr><td>在线人数、消息速率</td><td>IM hub 内存计数</td><td>WS <code>state{online}</code>（≤1 次/2s）；后台 10s 轮询</td><td>主播台 / 后台</td></tr><tr><td>治理状态（禁言、封禁、关键词、慢速）</td><td>SQLite <code>mod_state</code></td><td>REST + WS <code>state</code></td><td>主播台</td></tr><tr><td>投票、置顶、公告</td><td>hub 房间状态</td><td>WS <code>state</code></td><td>主播台 / 直播间</td></tr><tr><td>QoE 汇总（TTFF、卡顿、失败率）</td><td>ClickHouse 15 分钟窗口</td><td>后台 10s 轮询；Grafana 30s</td><td>后台 / Grafana</td></tr><tr><td>礼物流水</td><td>SQLite <code>gift_orders</code> + 账本</td><td>按需查询</td><td>后台（扩展）</td></tr></tbody></table></div><h2 id="ch10-代码走读">代码走读</h2><h3 id="ch10-主播控制台-apps-web-src-routes-host-tsx">主播控制台（<code>apps/web/src/routes/host.tsx</code>）</h3><ul>
+<li><strong>推流设置</strong>：<code>GET /v1/rooms/:id/key</code>（host/admin）返回 RTMP/WHIP/SRT 三种入口与密钥，密钥默认打码、可重置；附 OBS/FFmpeg 命令。</li>
+<li><strong>健康度卡片</strong>：入站码率由两次采样的 <code>bytesReceived</code> 差分计算。</li>
+<li><strong>预览播放器</strong>：复用 <code>LivePlayer</code>（<code>compact</code>、静音）。</li>
+<li><strong>聊天治理</strong>：点击昵称 → 禁言 5 分钟 / 封禁 / 置顶其最新消息；慢速模式 0/5/10/30s；关键词增删；公告发布。全部走 <code>POST /v1/rooms/:id/mod</code>（<code>ModAction</code> 是 zod 判别联合）。</li>
+<li><strong>投票面板</strong>：发起、实时票数条、结束。</li>
+</ul>
+<h3 id="ch10-管理后台-apps-web-src-routes-admin-tsx">管理后台（<code>apps/web/src/routes/admin.tsx</code>）</h3><p><code>GET /v1/admin/overview</code>（admin）= 房间列表（在线、消息/秒）+ <code>QoeSummary</code>；QoE 数字来自 <code>GET /v1/telemetry/summary</code> 的三条 ClickHouse SQL（第 11 章）。页面右上角直达 Grafana 看板。</p>
+<h3 id="ch10-权限">权限</h3><p>演示鉴权：任何人可用任意角色登录（<code>POST /v1/auth/demo</code>），JWT 里带 <code>role</code>；<code>requireRole(&#39;host&#39;,&#39;admin&#39;)</code> 保护治理与密钥接口。生产替换点：接入你的 SSO，把 <code>role</code> 换成&quot;房间-用户&quot;级权限表。</p>
+<h2 id="ch10-动手实验">动手实验</h2><ol>
+<li>以主播登录进 <code>/host/demo</code>，用 OBS 推流覆盖测试流（先 <code>docker stop livelab-pusher</code>），健康度卡片 2s 内变化。</li>
+<li>在治理面板加关键词&quot;广告&quot;，观众发&quot;这是广告&quot;→ 显示&quot;这是***&quot;。</li>
+<li>以管理员登录 <code>/admin</code>，对比 Grafana 总览的数值（同一 SQL，15 分钟窗口）。</li>
+</ol>
+<h2 id="ch10-生产注意事项">生产注意事项</h2><ul>
+<li>主播台的健康度应来自编码器侧上报（丢帧、RTT、编码延迟），MediaMTX 只知道收到了多少字节。</li>
+<li>治理动作要留审计日志（谁、何时、对谁、依据）。</li>
+<li>后台的实时数据订阅可以直接复用 IM 的 <code>admin:*</code> channel，而不是轮询。</li>
+<li>后台 UI 可用 Ant Design 6 + Pro Components 或 Refine 5 快速搭建；本项目为保持一套设计系统沿用 Tailwind。</li>
+</ul>
+<h2 id="ch10-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>运营工具的数据来源清单与刷新策略。</li>
+<li>治理动作的协议表达（<code>ModAction</code>）与广播方式（<code>system{mod}</code> + <code>state</code>）。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch09">← 09 付费与钱包：Mock 支付、签名 Webhook、幂等、双式账本</a>
+    <a class="next" href="#ch11">11 播放质量监控、埋点与异常采集 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch11" data-num="11">
+  <header class="chapter-head">
+    <span class="eyebrow">第 11 章</span>
+    <h1>播放质量监控、埋点与异常采集</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch11"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch11-目标">目标</h2><p>建立一条&quot;播放器事件 → 批量上报 → ClickHouse → Grafana 看板与告警&quot;的自托管管线，指标口径对齐 Mux / Conviva / 阿里云，并能在致命错误时拿到现场。</p>
+<h2 id="ch11-原理-指标定义-本项目采用">原理：指标定义（本项目采用）</h2><div class="table-wrap"><table><thead><tr><th>指标</th><th>定义</th><th>事件/列</th></tr></thead><tbody><tr><td>TTFF</td><td>用户意图播放（<code>play_attempt</code>）→ 首个 <code>playing</code></td><td><code>first_frame.value_ms</code></td></tr><tr><td>秒开率</td><td>TTFF ≤ 1000ms 的占比</td><td><code>countIf(value_ms&lt;=1000)/count()</code></td></tr><tr><td>卡顿</td><td>首帧后、非 seek/暂停期间的 <code>waiting</code> ≥200ms</td><td><code>stall_start</code> / <code>stall_end.value_ms</code></td></tr><tr><td>百秒卡顿时长</td><td>Σ卡顿ms ÷ Σ观看ms × 100</td><td><code>heartbeat.value_ms = playingMs</code></td></tr><tr><td>卡顿会话占比</td><td>有 <code>stall_end</code> 的 view ÷ 有 <code>play_attempt</code> 的 view</td><td>uniq(view_id)</td></tr><tr><td>播放失败率</td><td>有 <code>error{fatal}</code> 的 view ÷ 有 <code>play_attempt</code> 的 view</td><td><code>fatal=1</code></td></tr><tr><td>EBVS</td><td>无 <code>first_frame</code>、无 fatal、停留 ≥1s 后 <code>end</code></td><td><code>end.value_ms = watchMs</code></td></tr><tr><td>延迟</td><td>播放器到边缘：<code>bufferedEnd − currentTime</code>（hls.js 用 <code>hls.latency</code>）</td><td><code>latency_sample.latency_ms</code></td></tr><tr><td>掉帧率</td><td><code>droppedVideoFrames / totalVideoFrames</code> 增量</td><td><code>heartbeat</code></td></tr><tr><td>恢复动作</td><td>阶梯每一步</td><td><code>recovery_action.attrs.action</code></td></tr></tbody></table></div><p>维度：<code>session_id</code>（标签页）、<code>view_id</code>（每次起播）、<code>room_id</code>、<code>protocol</code>、<code>cdn</code>、<code>player/player_ver</code>、<code>os/browser/net_type</code>、<code>region/isp</code>，以及 hls.js CMCD v2 的 <code>sid</code> = <code>session_id</code>，让 CDN 日志能与播放器上报对齐。</p>
+<h2 id="ch11-代码走读">代码走读</h2><h3 id="ch11-sdk-packages-telemetry">SDK（<code>packages/telemetry</code>）</h3><figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-keyword">const</span> telemetry = <span class="hljs-title function_">createTelemetry</span>({ <span class="hljs-attr">endpoint</span>: <span class="hljs-string">&#x27;/v1/telemetry&#x27;</span>, <span class="hljs-attr">ctx</span>: { <span class="hljs-attr">player</span>: <span class="hljs-string">&#x27;livelab-web&#x27;</span>, playerVer, region, isp } });
+telemetry.<span class="hljs-title function_">track</span>(<span class="hljs-string">&#x27;video.first_frame&#x27;</span>, { <span class="hljs-attr">ttffMs</span>: <span class="hljs-number">312</span>, <span class="hljs-attr">protocol</span>: <span class="hljs-string">&#x27;llhls&#x27;</span>, <span class="hljs-attr">cdn</span>: <span class="hljs-string">&#x27;local-abr&#x27;</span> }, { viewId, roomId });
+telemetry.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;warn&#x27;</span>, <span class="hljs-string">&#x27;stall #2 → seek_live&#x27;</span>);
+<span class="hljs-keyword">await</span> telemetry.<span class="hljs-title function_">reportIssue</span>(<span class="hljs-string">&#x27;黑屏有声音&#x27;</span>);</code></pre></figure><ul>
+<li><strong>批量</strong>：≥20 条或 5s 一发；<code>visibilitychange=hidden</code>/<code>pagehide</code> 立即 flush；<code>fetch(..., { keepalive: true })</code>（OpenTelemetry 2026 已放弃 sendBeacon，同样选择）；单请求 &lt;60KB（keepalive 限制 64KB）。</li>
+<li><strong>采样</strong>：<code>heartbeat</code>、<code>latency_sample</code> 默认 20%，按 <code>fnv1a(sessionId|name)</code> 决定——同一会话要么全留要么全丢，时间序列不断裂。<code>error</code>、<code>first_frame</code>、<code>end</code>、<code>report_issue</code> 永不采样、永不因队列满而丢（独立&quot;必达&quot;队列）。</li>
+<li><strong>现场</strong>：致命错误与报障自动附带最近 50 条环形日志（<code>attrs.log</code>）与近 60s 媒体请求瀑布（<code>attrs.resources</code>，来自 <code>performance.getEntriesByType(&#39;resource&#39;)</code>）。</li>
+<li><strong>Web Vitals</strong>：<code>web-vitals</code> 6 的 LCP/INP/CLS/TTFB/FCP 以 <code>web.vital</code> 上报。</li>
+</ul>
+<h3 id="ch11-入库-apps-api-src-modules-telemetry">入库（<code>apps/api/src/modules/telemetry</code>）</h3><p><code>POST /v1/telemetry</code>（64KB 上限，zod 校验）→ <code>mapper.toRows</code>（扁平化为 <code>qoe.events</code> 列，其余属性进 <code>attrs</code> Map）→ <code>ClickHouseSink</code>（2s 或 1000 行批量 <code>INSERT … FORMAT JSONEachRow</code>，失败限频打日志后丢弃，永不阻塞请求）。未配置 ClickHouse 时退化为控制台输出。</p>
+<h3 id="ch11-存储-infra-clickhouse-init-sql">存储（<code>infra/clickhouse/init.sql</code>）</h3><p><code>qoe.events</code> MergeTree，按天分区，<code>ORDER BY (room_id, event, ts, session_id)</code>，TTL 30 天；<code>startup_5m</code> 物化视图预聚合 TTFF 分位数。为什么不用 Prometheus：会话级维度（session/ISP/CDN 的笛卡尔积）会让 label 爆炸，且无法按会话重算 p95。</p>
+<h3 id="ch11-看板与告警-infra-grafana-provisioning">看板与告警（<code>infra/grafana/provisioning</code>）</h3><p>三块看板：<strong>QoE 总览</strong>（会话数、TTFF p50/p95、秒开率、百秒卡顿、卡顿会话占比、失败率/EBVS、延迟按协议、码率与掉帧、Top 错误、恢复动作分布）、<strong>按 CDN/协议/网络</strong>、<strong>错误与异常分析</strong>（含致命会话的日志尾部与用户报障）。三条起步告警：TTFF p95 &gt; 3s 持续 10m；百秒卡顿 &gt; 3 持续 5m；失败率 &gt; 1% 持续 5m。</p>
+<h2 id="ch11-动手实验">动手实验</h2><ol>
+<li>播放 1 分钟后打开 Grafana（admin/admin）→ LiveLab · QoE 总览，把时间范围设为最近 15 分钟。</li>
+<li><code>/lab</code> 丢包 30% 播放 1 分钟，回到看板看百秒卡顿与 <code>recovery_action</code> 分布的变化。</li>
+<li>播放器右上角&quot;报障&quot;，填写描述，去&quot;错误与异常分析&quot;看板底部看 <code>attrs.resources</code>。</li>
+<li>直接查询：</li>
+</ol>
+<figure class="code" data-lang="sql"><div class="code-bar"><span>sql</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-keyword">SELECT</span> cdn, protocol, quantile(<span class="hljs-number">0.5</span>)(value_ms) p50, quantile(<span class="hljs-number">0.95</span>)(value_ms) p95, <span class="hljs-built_in">count</span>() n
+<span class="hljs-keyword">FROM</span> qoe.events <span class="hljs-keyword">WHERE</span> event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;first_frame&#x27;</span> <span class="hljs-keyword">AND</span> ts <span class="hljs-operator">&gt;</span> now() <span class="hljs-operator">-</span> <span class="hljs-type">INTERVAL</span> <span class="hljs-number">1</span> <span class="hljs-keyword">HOUR</span> <span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> cdn, protocol;</code></pre></figure><h2 id="ch11-生产注意事项">生产注意事项</h2><ul>
+<li>采集端加 OpenFeature 之类的 flag 维度，播放器配置 A/B 就是&quot;按 flag 变体分组看同一张表&quot;。</li>
+<li>接入 CDN 日志（Akamai DataStream / CloudFront real-time logs 已含 CMCD 字段）按 <code>sid</code> 关联。</li>
+<li>告警用多窗口 burn-rate 而不是单阈值，避免夜间低流量误报。</li>
+<li>隐私：<code>user_id</code> 哈希后入库；<code>attrs.log</code> 不要含 token。</li>
+</ul>
+<h2 id="ch11-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>每个指标的分子分母与排除规则。</li>
+<li>为什么按会话采样、为什么错误必达。</li>
+<li>ClickHouse vs Prometheus 的选择理由。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch10">← 10 运营工具：主播控制台与管理后台</a>
+    <a class="next" href="#ch12">12 前端性能与工程化 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch12" data-num="12">
+  <header class="chapter-head">
+    <span class="eyebrow">第 12 章</span>
+    <h1>前端性能与工程化</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch12"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch12-目标">目标</h2><p>直播间页面自身也要快、要可测、要可维护：分包、状态管理、测试金字塔与 CI 门禁。</p>
+<h2 id="ch12-原理与代码走读">原理与代码走读</h2><h3 id="ch12-分包与加载顺序">分包与加载顺序</h3><ul>
+<li>路由级 <code>lazy()</code>：首页不带播放器与 IM 代码；直播间进入时才下载。</li>
+<li>引擎级 <code>import()</code>：<code>createEngine(kind)</code> 只下载用到的内核（hls.js 71KB gz vs Shaka 140KB）；Vite 8（Rolldown）自动拆 chunk。</li>
+<li><code>preconnect</code> 三个媒体域；海报图作 LCP。</li>
+</ul>
+<h3 id="ch12-状态-zustand-与-tanstack-query-的分工">状态：Zustand 与 TanStack Query 的分工</h3><div class="table-wrap"><table><thead><tr><th>数据</th><th>工具</th><th>理由</th></tr></thead><tbody><tr><td>房间实时状态、消息列表、点赞、礼物</td><td>Zustand（<code>stores/room.ts</code>）</td><td>高频写入；<code>subscribe</code> 可绕过 React 渲染（弹幕层、礼物层）</td></tr><tr><td>REST 数据（房间、钱包、礼物目录、健康度）</td><td>TanStack Query</td><td>缓存、轮询、乐观更新、失效</td></tr><tr><td>登录态</td><td>Zustand persist</td><td>localStorage 持久化</td></tr></tbody></table></div><p>一个 <code>batch</code> 帧 = 一次 <code>set</code>；聊天列表只渲染尾部 120 条；覆盖层 canvas 不进 React。</p>
+<h3 id="ch12-类型安全的边界">类型安全的边界</h3><p>所有网络数据经 zod：<code>api.get(path, schema)</code> 在运行时校验响应；WS 帧 <code>ServerFrame.safeParse</code>。前后端共享 <code>@livelab/protocol</code>，改协议先改 schema，typecheck 会指出所有需要改的地方。</p>
+<h3 id="ch12-测试金字塔">测试金字塔</h3><div class="table-wrap"><table><thead><tr><th>层</th><th>工具</th><th>覆盖</th></tr></thead><tbody><tr><td>单元</td><td>Vitest 5（jsdom）</td><td>轨道分配、QoE 探针（假定时器）、遥测批量/采样、IM 客户端退避、房间 store、礼物队列、协议 schema</td></tr><tr><td>服务</td><td>Vitest + <code>app.inject()</code> + 真实 <code>ws</code> 客户端</td><td>IM 握手/续传/治理、钱包幂等、礼物、遥测入库、弱网代理、健康度</td></tr><tr><td>端到端</td><td>Playwright 1.63</td><td>登录 → 进房 → 视频 <code>currentTime</code> 增长 → QoE 浮层显示线路 → 聊天回显；MediaMTX 不在线时自动跳过</td></tr></tbody></table></div><figure class="code" data-lang="bash"><div class="code-bar"><span>bash</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">pnpm typecheck &amp;&amp; pnpm <span class="hljs-built_in">test</span>        <span class="hljs-comment"># 275+ 单元/服务用例</span>
+pnpm --filter @livelab/web e2e     <span class="hljs-comment"># 需要 pnpm infra:up &amp;&amp; pnpm dev</span></code></pre></figure><h3 id="ch12-依赖策略">依赖策略</h3><p>TypeScript 锁 5.9.3（7.0 发布当天，生态未跟上）；hls.js/mpegts.js 精确小版本；<code>node:sqlite</code>、<code>process.loadEnvFile</code> 等 Node 内置能力代替第三方包。</p>
+<h2 id="ch12-动手实验">动手实验</h2><ol>
+<li><code>pnpm --filter @livelab/web build</code>，看 <code>dist/assets</code> 里 hls.js、mpegts.js 各自独立 chunk。</li>
+<li>React DevTools Profiler：刷屏时直播间只有聊天列表重渲染，播放器与覆盖层不动。</li>
+<li>改 <code>packages/protocol/src/im.ts</code> 给 <code>ChatMsg</code> 加字段，跑 <code>pnpm typecheck</code> 看影响面。</li>
+</ol>
+<h2 id="ch12-生产注意事项">生产注意事项</h2><ul>
+<li>CI：typecheck + unit + build 作为 PR 门禁；E2E 在有 Docker 的 job 里跑。</li>
+<li>Source map 上传到错误平台（Sentry/PostHog）以便 <code>attrs.log</code> 里的栈可读。</li>
+<li>把 <code>apps/web</code> 的 <code>/v1</code> 代理换成网关域名；WS 走 <code>wss://</code>。</li>
+</ul>
+<h2 id="ch12-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>高频实时数据为什么不用 React state。</li>
+<li>zod 在边界上的价值。</li>
+<li>测试金字塔各层测什么、不测什么。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch11">← 11 播放质量监控、埋点与异常采集</a>
+    <a class="next" href="#ch13">13 上云与 CDN：跨境直播的生产方案 →</a>
+  </footer>
+</section>
+<section class="chapter" id="ch13" data-num="13">
+  <header class="chapter-head">
+    <span class="eyebrow">第 13 章</span>
+    <h1>上云与 CDN：跨境直播的生产方案</h1>
+    <label class="mark-read"><input type="checkbox" data-read="ch13"> 已读</label>
+  </header>
+  <div class="prose"><h2 id="ch13-目标">目标</h2><p>把本地的 MediaMTX 换成云服务、把 <code>local-a/local-b</code> 换成真实 CDN，并给出一个中国公司服务&quot;内地 + 东南亚 + 欧美&quot;观众的多 CDN 方案与成本估算方法。所有价格为 2026-09-13 官方页面数据，采购前需复核。</p>
+<h2 id="ch13-云直播服务对比">云直播服务对比</h2><div class="table-wrap"><table><thead><tr><th>服务</th><th>低延迟能力</th><th>亚秒能力</th><th>计费模型</th><th>适合</th></tr></thead><tbody><tr><td>阿里云 视频直播</td><td>标准 FLV/HLS + 直播封装 LL-HLS（<code>-llhls.m3u8</code>）</td><td>RTS（ARTC/WebRTC，200–800ms）</td><td>内地 0.396 元/GB 起；亚太 0.81–1.17；北美/欧洲 0.69 元/GB</td><td>内地主力</td></tr><tr><td>腾讯云 云直播 CSS</td><td>标准 + CMAF/LLHLS 封装</td><td>快直播 LEB（<code>webrtc://</code>）</td><td>内地 0.52 元/GB 起；境外分区 0.56–2.40 元/GB</td><td>内地主力</td></tr><tr><td>Cloudflare Stream Live</td><td>LL-HLS（open beta ~3s）</td><td>WHIP/WHEP GA（2026-10-15 起计费）</td><td>$1 / 1000 分钟播放</td><td>海外主力，成本可预测</td></tr><tr><td>AWS IVS</td><td>Low-Latency（2–5s）</td><td>Real-Time（&lt;300ms）</td><td>按输入小时 + 观众小时分区计价</td><td>海外互动</td></tr><tr><td>火山引擎 veLive</td><td>低延时 FLV 2–3s</td><td>RTM（<code>.sdp</code>）&lt;1s</td><td>需商务询价</td><td>抖音生态</td></tr><tr><td>Mux Video Live</td><td>LL-HLS</td><td>—</td><td>编码分钟 + 分发分钟</td><td>快速集成</td></tr><tr><td>Agora</td><td>—</td><td>互动直播</td><td>$0.59–17.99 / 1000 分钟</td><td>强互动/连麦</td></tr></tbody></table></div><h2 id="ch13-参考架构">参考架构</h2><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">主播 OBS/App ─RTMP(默认)/SRT(弱网)/WHIP(互动)─▶ 就近接入 PoP（内地：阿里/腾讯；海外：Cloudflare/IVS）
+                                                  │ 跨境同步走 阿里云 GA / 腾讯 GAAP 专线（联通跨境资质）
+                                                  ▼
+                       转码 Origin：5 档 ABR（1080p 4.5M / 720p 2.5M / 540p 1.4M / 360p 0.7M / 纯音频 64–96k）
+                       ├─ LL-HLS(fMP4, part 500ms, 阻塞刷新) ─▶ 内地 CDN + Cloudflare + CloudFront
+                       ├─ HTTP-FLV(2–3s) ─────────────────────▶ 内地 CDN
+                       └─ WebRTC(RTS/LEB/WHEP, &lt;1s) ──────────▶ 各云实时边缘
+                                                  ▼
+                       调度服务：IP 地理 + ISP + 实时 QoE（播放器上报）→ 2–3 条 pathway（本项目的 /v1/rooms/:id/play）
+                                                  ▼
+                       React 播放器：hls.js / mpegts.js / WHEP；卡顿阶梯；切 pathway；上报 QoE</code></pre></figure><p>本项目的 <code>Pathway.cdn</code> 标签、<code>PlayPolicy</code> 与 <code>recovery_action</code> 事件就是这套架构的客户端半边；把 <code>buildPathways</code> 的 URL 换成云地址，前端不用改。</p>
+<h2 id="ch13-多-cdn-调度-由粗到细">多 CDN 调度（由粗到细）</h2><ol>
+<li><strong>DNS 切换</strong>：粒度粗、受 TTL 限制。</li>
+<li><strong>302 / HTTPDNS 调度</strong>：请求级、秒级切换，国内直播主流；快手用 HTTPDNS 后首屏 −30%、百秒卡顿 −20%。</li>
+<li><strong>客户端切换</strong>：播放器持多条地址，失败/卡顿即切（本项目已实现）。</li>
+<li><strong>HLS Content Steering</strong>：标准化方案，hls.js/dash.js/AVPlayer 支持；steering server 返回 pathway 优先级 JSON，切换不丢缓冲。示例 steering 响应：</li>
+</ol>
+<figure class="code" data-lang="json"><div class="code-bar"><span>json</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;VERSION&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;TTL&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">300</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;RELOAD-URI&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;https://steer.example.com/s?sid=…&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;PATHWAY-PRIORITY&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;aliyun-cn&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;cloudflare&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;cloudfront&quot;</span><span class="hljs-punctuation">]</span> <span class="hljs-punctuation">}</span></code></pre></figure><p>在 master playlist 里加 <code>#EXT-X-CONTENT-STEERING:SERVER-URI=&quot;…&quot;,PATHWAY-ID=&quot;aliyun-cn&quot;</code>，各 variant 用 <code>PATHWAY-ID</code> 标注。调度服务的输入正是第 11 章上报的 <code>cdn × region × isp</code> 的 TTFF/卡顿数据。</p>
+<h2 id="ch13-ll-hls-上-cdn-的核对清单">LL-HLS 上 CDN 的核对清单</h2><ul>
+<li><input disabled="" type="checkbox"> <code>_HLS_msn</code> / <code>_HLS_part</code> / <code>_HLS_skip</code> 进入缓存键；</li>
+<li><input disabled="" type="checkbox"> 源站真正 hold 阻塞式请求（~50ms 内响应），而非立即返回旧清单；</li>
+<li><input disabled="" type="checkbox"> 清单 <code>Cache-Control: max-age=1</code> 或更短；part 200–500ms；</li>
+<li><input disabled="" type="checkbox"> 回源合并（request collapsing）开启：6s 切片 + 200ms part × 5 档 = 每 6s 150 请求；</li>
+<li><input disabled="" type="checkbox"> HTTP/2 起步；HTTP/3 需 CDN 实现 RFC 9218 优先级，否则可能劣化。</li>
+</ul>
+<h2 id="ch13-中国合规与跨境">中国合规与跨境</h2><ul>
+<li>内地加速/直播域名必须 ICP 备案；Cloudflare China Network 由京东云运营，Stream 不在其支持列表。</li>
+<li>内地 ↔ 海外源流同步走阿里云 GA / 腾讯 GAAP，需申请联通跨境资质（预留 1–2 周）。</li>
+<li>内地观众固定落境内 CDN；海外默认 Cloudflare，欧美峰值备 CloudFront；每周按各 CDN 质量与单价重排权重。</li>
+</ul>
+<h2 id="ch13-成本估算工作表">成本估算工作表</h2><p>以&quot;1 万并发 × 2 小时 × 720p 2.5Mbps&quot;为例：流量 = 10000 × 7200 s × 2.5 Mbps ÷ 8 = 22.5 TB。</p>
+<div class="table-wrap"><table><thead><tr><th>线路</th><th>单价</th><th>估算</th></tr></thead><tbody><tr><td>阿里云内地</td><td>0.396 元/GB（0–10TB 档，阶梯更低）</td><td>≈ 8,900 元</td></tr><tr><td>阿里云亚太 1</td><td>0.812 元/GB</td><td>≈ 18,300 元</td></tr><tr><td>Cloudflare Stream</td><td>$1 / 1000 观看分钟</td><td>10000 × 120 分钟 = 1.2M 分钟 ≈ $1,200</td></tr><tr><td>AWS IVS RT（互动房间）</td><td>$0.072 / 参会者小时</td><td>1000 人 × 2 h ≈ $144</td></tr></tbody></table></div><p>结论：海外用 Cloudflare 按分钟计费最可预测；内地按流量并利用阶梯价；互动只给需要的房间开。</p>
+
+<div class="widget" data-widget="cost">
+  <div class="widget-head"><span class="eyebrow">交互 · 分发成本估算</span><span class="widget-note">按官方 2026-09 挂牌价估算，采购前请复核</span></div>
+  <div class="cost-inputs">
+    <label>并发观众 <input type="number" id="c-viewers" value="10000" min="1" step="100"></label>
+    <label>时长（小时） <input type="number" id="c-hours" value="2" min="0.1" step="0.5"></label>
+    <label>平均码率（Mbps） <input type="number" id="c-mbps" value="2.5" min="0.1" step="0.1"></label>
+    <label>互动房间人数 <input type="number" id="c-rt" value="1000" min="0" step="100"></label>
+  </div>
+  <div class="table-wrap"><table class="cost-table"><thead><tr><th>线路</th><th>单价</th><th>用量</th><th>估算</th></tr></thead><tbody id="c-body"></tbody></table></div>
+</div>
+
+<h2 id="ch13-迁移步骤-从本项目到云">迁移步骤（从本项目到云）</h2><ol>
+<li>推流：OBS 指向云接入地址；保留 SRT/WHIP 备选。</li>
+<li><code>buildPathways</code>：返回云播放地址，<code>cdn</code> 标签用真实 CDN 名。</li>
+<li>遥测：<code>region/isp</code> 由边缘（Cloudflare Workers / 阿里云 ESA）注入或按 IP 库解析。</li>
+<li>调度：先用客户端切换，稳定后接 Content Steering / HTTPDNS。</li>
+<li>观测：CDN 日志（CMCD <code>sid</code>）与 <code>qoe.events</code> 关联，看板增加&quot;按 CDN&quot;页。</li>
+</ol>
+<h2 id="ch13-面试-复盘要点">面试/复盘要点</h2><ul>
+<li>四种多 CDN 调度方式的粒度与代价。</li>
+<li>LL-HLS 上 CDN 的核对清单。</li>
+<li>ICP、跨境专线资质对架构与排期的影响。</li>
+<li>能用工作表估算一场直播的分发成本。</li>
+</ul>
+</div>
+  <footer class="chapter-nav">
+    <a class="prev" href="#ch12">← 12 前端性能与工程化</a>
+    <a class="next" href="#ap0">附录 A →</a>
+  </footer>
+</section>
+    
+<section class="chapter appendix" id="ap0">
+  <header class="chapter-head"><span class="eyebrow">附录 A · 调研报告（2026-09-13）</span><h1>浏览器端直播播放技术现状调研（2026-09）</h1></header>
+  <details class="prose"><summary>展开报告全文</summary><blockquote>
+<p>所有版本号/日期均来自 npm registry（2026-09-13 查询）或所引 URL。</p>
+</blockquote>
+<h2 id="ap0-1-hls-js">1. hls.js</h2><div class="table-wrap"><table><thead><tr><th>项目</th><th>现状</th><th>来源</th></tr></thead><tbody><tr><td>最新稳定版</td><td><strong>1.7.3</strong>（2026-09-11）；1.7.0 于 2026-08-12 发布</td><td><a href="https://www.npmjs.com/package/hls.js">npm</a>、<a href="https://github.com/video-dev/hls.js/releases">GitHub Releases</a></td></tr><tr><td>LL-HLS</td><td>完整支持 Partial Segments、Blocking Playlist Reload、Delta Updates、Rendition Reports；<code>lowLatencyMode</code> 默认 <code>true</code></td><td><a href="https://github.com/video-dev/hls.js/blob/master/README.md">README</a>、<a href="https://github.com/video-dev/hls.js/blob/master/docs/API.md">API.md</a></td></tr><tr><td>iOS Safari</td><td>自 1.5.0 起通过 ManagedMediaSource (MMS) 支持 iOS 17.1+；<code>preferManagedMediaSource</code> 默认 <code>false</code></td><td>README</td></tr><tr><td>Worker</td><td>仅 transmuxer 跑在 Worker，MediaSource 仍在主线程（issue #4592）。ESM 构建不内联 worker，必须显式配 <code>workerPath</code></td><td><a href="https://dev.to/masonwritescode/check-whether-hlsjs-is-actually-using-a-worker-most-esm-setups-arent-2jfc">dev.to</a></td></tr><tr><td>CMCD / CMSD</td><td>CMCD v1 + v2（1.7.0 起 <code>cmcd.version: 2</code>）；CMSD 未实现</td><td><a href="https://github.com/video-dev/hls.js/releases/tag/v1.7.0">v1.7.0 release</a></td></tr></tbody></table></div><p>1.7.0 关键新特性：<code>createIFramePlayer()</code>、<code>nextAudioTrack</code>、init segment 并行加载、<code>abrSwitchInterval</code>、<code>errorPenaltyExpireMs</code>、<code>liveMaxUnchangedPlaylistRefresh</code>、<code>appendTimeout</code>、<code>MEDIA_SOURCE_REQUIRES_RESET</code> 恢复机制。</p>
+<p>低延迟直播核心配置（默认值）：</p>
+<figure class="code" data-lang="ts"><div class="code-bar"><span>ts</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">{
+  <span class="hljs-attr">lowLatencyMode</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">liveSyncDurationCount</span>: <span class="hljs-number">3</span>,
+  <span class="hljs-attr">liveSyncDuration</span>: <span class="hljs-literal">undefined</span>,
+  <span class="hljs-attr">liveMaxLatencyDuration</span>: <span class="hljs-literal">undefined</span>,
+  <span class="hljs-attr">maxLiveSyncPlaybackRate</span>: <span class="hljs-number">1</span>,
+  <span class="hljs-attr">backBufferLength</span>: <span class="hljs-title class_">Infinity</span>,   <span class="hljs-comment">// 直播建议 30~90</span>
+  <span class="hljs-attr">maxBufferLength</span>: <span class="hljs-number">30</span>,
+  <span class="hljs-attr">startLevel</span>: <span class="hljs-literal">undefined</span>, <span class="hljs-attr">testBandwidth</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">abrEwmaDefaultEstimate</span>: <span class="hljs-number">500000</span>, <span class="hljs-attr">abrBandWidthFactor</span>: <span class="hljs-number">0.95</span>,
+  <span class="hljs-attr">enableWorker</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">workerPath</span>: <span class="hljs-literal">null</span>,
+  <span class="hljs-attr">preferManagedMediaSource</span>: <span class="hljs-literal">false</span>,
+  <span class="hljs-attr">cmcd</span>: { sessionId, contentId, useHeaders, <span class="hljs-attr">version</span>: <span class="hljs-number">2</span>, eventTargets }
+}</code></pre></figure><h2 id="ap0-2-mpegts-js-flv-js-后继">2. mpegts.js（flv.js 后继）</h2><ul>
+<li>最新 1.8.2（2026-08-14）、1.8.1（2026-08-06：Webpack 5/TS 5.9.3、PGS 字幕、<code>SEI_ARRIVED</code> 事件、修 iOS 26 MediaSource 检测与 Safari 26.5+ 卡死）；1.8.0（2024-12-24：MMS/iOS 17.1+、MSE in Workers、AV1、基于 playbackRate 的延迟追赶）。<a href="https://www.npmjs.com/package/mpegts.js">npm</a>、<a href="https://github.com/xqq/mpegts.js/releases">Releases</a></li>
+<li>维护状态：单一维护者，间歇式活跃；flv.js 停在 1.6.2（2021-09）。</li>
+<li>桌面 HTTP-FLV 在 2026 仍是 1–3 s 档的实用选择（SRS 生态），定位&quot;中间档&quot;。<a href="https://ossrs.net/lts/en-us/blog/hls-5s-low-latency">SRS blog</a></li>
+<li>iOS：≤17.0 不可用（无 MSE），17.1+ 可通过 MMS 工作。</li>
+</ul>
+<h2 id="ap0-3-webrtc-播放-whep">3. WebRTC 播放（WHEP）</h2><ul>
+<li>标准化：<code>draft-ietf-wish-whep-04</code>（2026-06-22），尚未成为 RFC；WHIP 已是 RFC 9725。<a href="https://datatracker.ietf.org/doc/draft-ietf-wish-whep/">IETF</a></li>
+<li>客户端库普遍更新慢（WHEP 本质只是 fetch + RTCPeerConnection 约 50 行）：<code>@eyevinn/whep-video-component</code> 0.1.0（2023-09）、<code>whip-whep</code> 1.2.0（2024-05）。</li>
+<li>服务端自带播放器：SRS <code>http://host:1985/rtc/v1/whep/?app=live&amp;stream=xxx</code>；MediaMTX <code>http://host:8889/&lt;stream&gt;/whep</code>。<a href="https://ossrs.net/lts/en-us/docs/v5/doc/webrtc">SRS</a>、<a href="https://mediamtx.org/docs/read/webrtc">MediaMTX</a></li>
+<li>实测延迟：MediaMTX 四个生产部署 P50 180–740 ms、P95 240–1180 ms；Cloudflare Stream WebRTC &lt;500 ms，2026-10-15 起 GA 计费（$1/1000 min）。<a href="https://www.adaptnxt.com/blogs/mediamtx-whip-whep-latency-benchmarks-4-deployments">AdaptNXT</a>、<a href="https://developers.cloudflare.com/stream/webrtc-beta/">Cloudflare</a></li>
+</ul>
+<h2 id="ap0-4-media-over-quic-moq">4. Media over QUIC（MoQ）</h2><ul>
+<li><code>draft-ietf-moq-transport-17</code>（2026-05），未成 RFC。WebTransport 于 Safari/iOS 26.4（2026-03/04）落地，三大浏览器全覆盖。<a href="https://webrtc.ventures/2026/04/webtransport-is-now-baseline-what-it-means-for-real-time-media/">webrtc.ventures</a></li>
+<li>Cloudflare 2025-08-22 上线 MoQ relay tech preview；JS 库 <code>@moq/hang</code> 0.4.3。<a href="https://blog.cloudflare.com/moq/">Cloudflare blog</a></li>
+<li>结论：2026 属于&quot;可试点、不宜作为主路径&quot;。</li>
+</ul>
+<h2 id="ap0-5-ui-层">5. UI 层</h2><div class="table-wrap"><table><thead><tr><th>库</th><th>最新版本</th><th>维护/React 友好度</th></tr></thead><tbody><tr><td>Vidstack</td><td><code>next</code> 1.15.6；<code>latest</code> 仍是 0.6.15（2024）</td><td>作者已加入 Mux，轻维护，重心转向 Video.js v10。<a href="https://github.com/vidstack/player/discussions/1755">Discussion #1755</a></td></tr><tr><td>media-chrome</td><td>4.19.2</td><td>Mux 维护、Web Components + 官方 React 包装，稳定</td></tr><tr><td>Video.js 8</td><td>8.24.0</td><td>维护模式；没有 v9，直接跳到 v10</td></tr><tr><td>Video.js v10</td><td><code>@videojs/core</code>/<code>@videojs/react</code> 10.0.0-rc.2（2026-09-09）</td><td>Mux 主导，Vidstack + Media Chrome + Plyr 合流；GA 定在 2026 秋。<a href="https://www.mux.com/blog/videojs">Mux blog</a></td></tr><tr><td>Shaka Player</td><td>5.2.10</td><td>Google 维护；<code>streaming.lowLatencyMode</code>；包体约为 hls.js 两倍</td></tr><tr><td>dash.js</td><td>5.2.1</td><td>仅 DASH；唯一实现 CMSD 的主流播放器</td></tr></tbody></table></div><h2 id="ap0-6-协议对比">6. 协议对比</h2><div class="table-wrap"><table><thead><tr><th></th><th>HLS</th><th>LL-HLS</th><th>HTTP-FLV</th><th>WebRTC (WHEP)</th></tr></thead><tbody><tr><td>玻璃到玻璃延迟</td><td>20–45 s（SRS 调优可到 5 s）</td><td>2–4 s</td><td>1–3 s</td><td>0.1–0.5 s</td></tr><tr><td>CDN 兼容</td><td>任何 HTTP CDN</td><td>需 HTTP/2 + 支持 blocking reload 的 CDN</td><td>需长连接透传，多用自建边缘</td><td>需 SFU/WebRTC CDN，单价高</td></tr><tr><td>iOS Safari</td><td>原生</td><td>原生</td><td>仅 iOS 17.1+ 经 MMS</td><td>原生 WebRTC，移动端多 100–250 ms jitter</td></tr><tr><td>成本</td><td>最低</td><td>略高（请求数×10）</td><td>中</td><td>最高</td></tr><tr><td>典型场景</td><td>点播式直播</td><td>直播带货、新闻、赛事</td><td>国内秀场/游戏直播桌面端</td><td>拍卖、连麦、互动竞猜</td></tr></tbody></table></div><p>来源：<a href="https://www.mux.com/articles/low-latency-live-streaming-developers-guide-ll-hls-webrtc-cmaf">Mux</a>、<a href="https://ossrs.net/lts/en-us/blog/hls-5s-low-latency">SRS</a></p>
+<h2 id="ap0-7-起播时间优化-2025-2026-推荐">7. 起播时间优化（2025–2026 推荐）</h2><ol>
+<li><code>&lt;link rel=&quot;preconnect&quot;&gt;</code> 到 manifest/分片域名：实测省 ~450 ms。<a href="https://www.heartinternet.uk/blog/streaming-video-on-the-web-a-performance-review-of-popular-javascript-players/">Heart Internet</a></li>
+<li>包体与压缩：hls.js 71 KB vs Shaka 140 KB / video.js 133 KB。</li>
+<li>首档位策略：<code>startLevel</code> 固定中低档 + <code>testBandwidth:false</code> + <code>abrEwmaDefaultEstimate</code>（从 localStorage 恢复上次估值）；<code>startFragPrefetch:true</code>。</li>
+<li>减小起播缓冲：<code>liveSyncDuration</code> 1–2 s + <code>maxLiveSyncPlaybackRate:1.5</code>；<code>backBufferLength</code> ≤30。</li>
+<li>1.7.0 init segment 并行加载直接缩短 TTFF。</li>
+<li>fMP4/CMAF 优于 TS：LL-HLS Partial Segment 要求 CMAF；fMP4 无需 transmux。<a href="https://antmedia.io/low-latency-hls-or-ll-hls/">Ant Media</a></li>
+<li>服务端参数：2 s 分片、200–500 ms part、hold time 3–5 s、<code>CAN-BLOCK-RELOAD=YES</code>。</li>
+<li>HTTP/3：需 CDN 实现 RFC 9218 优先级；HTTP/2 仍是 LL-HLS 基线。</li>
+<li>确认 Worker 真正启用：Vite 下 <code>import workerUrl from &#39;hls.js/dist/hls.worker.js?url&#39;</code> 传给 <code>workerPath</code>。</li>
+</ol>
+<h2 id="ap0-recommendations">Recommendations</h2><ul>
+<li>(a) 默认广兼容路径：hls.js 1.7.x + LL-HLS(CMAF)；iOS Safari 走原生 <code>&lt;video src=m3u8&gt;</code>；开启 CMCD v2。</li>
+<li>(b) 低延迟桌面路径：mpegts.js 1.8.2（HTTP-FLV），仅桌面 Chromium/Firefox 且已有 FLV 边缘时启用；封装适配层并锁版本。</li>
+<li>(c) 亚秒互动路径：自写 ~50 行 WHEP client（POST SDP → 201/Location → ICE），服务端 MediaMTX/SRS/Cloudflare Stream。MoQ 作为 2027 备选。</li>
+<li>UI 层：media-chrome 4.19.x（React 包装），预留迁移到 Video.js v10 <code>@videojs/react</code>。三种引擎都只输出到同一个 <code>&lt;video&gt;</code>，UI 与引擎解耦。</li>
+</ul>
+</details>
+</section>
+<section class="chapter appendix" id="ap1">
+  <header class="chapter-head"><span class="eyebrow">附录 B · 调研报告（2026-09-13）</span><h1>跨境直播平台 媒体后端 / 云直播 / CDN 选型报告（2026-09）</h1></header>
+  <details class="prose"><summary>展开报告全文</summary><blockquote>
+<p>版本号、日期、价格均来自 2026-09-13 抓取的官方页面 / GitHub API / Docker Hub。</p>
+</blockquote>
+<h2 id="ap1-1-自托管开源媒体服务器">1. 自托管开源媒体服务器</h2><div class="table-wrap"><table><thead><tr><th>项目</th><th>最新稳定版</th><th>推流 Ingest</th><th>播放 Egress</th><th>官方 Docker</th></tr></thead><tbody><tr><td>SRS</td><td><code>v6.0-r1</code>（2026-08-12）；<code>v7.0-d0</code> pre-release</td><td>RTMP、SRT、WHIP、GB28181</td><td>HTTP-FLV、HLS、HTTP-TS、DASH、WHEP</td><td><code>ossrs/srs:6</code>；端口 1935 / 1985(API) / 8080(HTTP) / 8000udp(WebRTC) / 10080udp(SRT)</td></tr><tr><td>MediaMTX</td><td><code>v1.21.0</code>（2026-09-05）</td><td>RTSP、RTMP(S)、SRT、WHIP、HLS、MPEG-TS、MoQ</td><td>RTSP、RTMP、SRT、WHEP、HLS（Low-Latency 模式）、MoQ</td><td><code>bluenviron/mediamtx:1.21.0</code>；端口 8554 / 1935 / 8888(HLS) / 8889(WebRTC) / 8890(SRT)</td></tr><tr><td>OvenMediaEngine</td><td><code>v0.21.0</code>（2026-08-13）</td><td>RTMP、SRT、WHIP、MPEG-TS</td><td>WebRTC、LLHLS、HLS</td><td><code>airensoft/ovenmediaengine:latest</code></td></tr><tr><td>nginx-rtmp-module</td><td>master 最后提交 2024-12-24</td><td>RTMP</td><td>HLS/DASH</td><td>无官方镜像</td></tr></tbody></table></div><p>要点：</p>
+<ul>
+<li>SRS 6 不支持 LL-HLS，但 HTTP-FLV + WHEP 是国内直播平台最常见低延迟组合。</li>
+<li>MediaMTX 是唯一在一个静态二进制里同时覆盖 RTMP/SRT/WHIP/WHEP/LL-HLS/MoQ 的项目；v1.21.0 修复 CORS 默认策略。</li>
+<li>nginx-rtmp 停滞，2026 年不建议新项目采用。</li>
+</ul>
+<p>本地开发推荐：MediaMTX；SRS 作为第二选择验证 HTTP-FLV 路径。</p>
+<p>来源：<a href="https://github.com/ossrs/srs/releases">https://github.com/ossrs/srs/releases</a> · <a href="https://github.com/bluenviron/mediamtx/releases">https://github.com/bluenviron/mediamtx/releases</a> · <a href="https://mediamtx.org/docs/read/hls">https://mediamtx.org/docs/read/hls</a> · <a href="https://github.com/OvenMediaLabs/OvenMediaEngine/releases">https://github.com/OvenMediaLabs/OvenMediaEngine/releases</a></p>
+<h2 id="ap1-2-云直播托管服务-2026-特性-计费">2. 云直播托管服务（2026 特性 + 计费）</h2><div class="table-wrap"><table><thead><tr><th>服务</th><th>关键能力</th><th>计费模型</th></tr></thead><tbody><tr><td>AWS IVS</td><td>Low-Latency（HLS 2–5s）与 Real-Time（WebRTC &lt;300ms）；Multitrack</td><td>LL 输入按小时 $0.20–$2.00/h；LL 输出按观众小时 $0.0072–$0.144/h；RT $0.072/参会者小时</td></tr><tr><td>Cloudflare Stream Live</td><td>RTMPS/SRT/WHIP 推流；HLS/DASH/WHEP 播放；LL-HLS 开放测试版（~3s）；WHIP/WHEP GA，2026-10-15 起计费</td><td>$1 / 1000 分钟播放，$5 / 1000 分钟录制</td></tr><tr><td>Mux Video Live</td><td>plus/premium 档，最高 1080p</td><td>编码 $0.02375–$0.044531/min；分发前 10 万分钟免费</td></tr><tr><td>阿里云 视频直播 + RTS</td><td>RTS 基于 ARTC（WebRTC）<code>artc://</code>，200–800ms；直播封装提供 LL-HLS（<code>-llhls.m3u8</code>）</td><td>RTS 内地 0.396 元/GB→0.2475；亚太 0.812–1.17；北美/欧洲 0.69 元/GB</td></tr><tr><td>腾讯云 CSS + 快直播 LEB</td><td>LEB <code>webrtc://</code> 毫秒级</td><td>内地 0.52 元/GB→0.32；境外分区 0.56–2.40 元/GB</td></tr><tr><td>火山引擎 veLive</td><td>标准直播 + RTM（<code>.sdp</code>）+ 低延时 FLV</td><td>价格页 JS 渲染未能抓取</td></tr><tr><td>Agora</td><td>Broadcast Streaming / ILS</td><td>$0.59–$17.99 / 1000 分钟；每月 1 万分钟免费</td></tr></tbody></table></div><p>中国合规与跨境加速：</p>
+<ul>
+<li>ICP：内地加速/直播域名必须备案；Cloudflare China Network 由 JD Cloud 运营，Stream 未列为支持产品。</li>
+<li>阿里云直播全球加速（GA）、腾讯云 GAAP：跨境通道需联通跨境资质审核。</li>
+</ul>
+<p>来源：<a href="https://aws.amazon.com/ivs/pricing/">https://aws.amazon.com/ivs/pricing/</a> · <a href="https://developers.cloudflare.com/stream/webrtc-beta/">https://developers.cloudflare.com/stream/webrtc-beta/</a> · <a href="https://help.aliyun.com/zh/live/billing-of-rts">https://help.aliyun.com/zh/live/billing-of-rts</a> · <a href="https://cloud.tencent.com/document/product/267/39136">https://cloud.tencent.com/document/product/267/39136</a> · <a href="https://docs.agora.io/en/broadcast-streaming/overview/pricing">https://docs.agora.io/en/broadcast-streaming/overview/pricing</a></p>
+<h2 id="ap1-3-hls-ll-hls-的-cdn-要求与多-cdn-策略">3. HLS / LL-HLS 的 CDN 要求与多 CDN 策略</h2><p>LL-HLS 对 CDN 的硬性要求：</p>
+<ol>
+<li>不再需要 HTTP/2 Push；HTTP/1.1 chunked、HTTP/2、HTTP/3 均可。</li>
+<li>阻塞式 playlist reload：<code>_HLS_msn</code> / <code>_HLS_part</code> / <code>_HLS_skip</code> 必须进入 CDN 缓存键。</li>
+<li>Part 200–500ms；清单 <code>Cache-Control: max-age=1</code>；Preload Hint、Rendition Report、Delta Update。</li>
+<li>请求量放大（6s 切片 + 200ms Part × 5 档 = 每 6s 150 请求），request collapsing 是成本关键。</li>
+</ol>
+<p>CDN 支持：Akamai、CloudFront、Cloudflare、Fastly 均支持 LL-HLS 但需显式配置缓存键；阿里云&quot;直播封装&quot;提供 LL-HLS。</p>
+<p>多 CDN 调度：DNS 切换（粗）→ 302/HTTPDNS 调度（国内主流）→ 客户端切换 → HLS Content Steering（hls.js 已支持，steering server 返回 JSON 实时切换 pathway 不丢缓冲）。</p>
+<p>国内大厂实践：</p>
+<ul>
+<li>快手：KTP + 多 CDN 智能调度（Flink 实时调整配比）；HTTPDNS 后首屏 -30%、百秒卡顿 -20%。</li>
+<li>B站：HLS + P2P（fMP4/CMAF 0.5–1s 切片）；首帧 = 流地址查询 + 网络传输 + 解码三段；备用 URL 故障切换，卡顿率 1.2%→0.56%。</li>
+<li>抖音/火山：FLV 2–3s、RTM &lt;1s；BVC 编码 + ROI。</li>
+</ul>
+<p>来源：<a href="https://www.forasoft.com/learn/video-streaming/articles-streaming/ll-hls-deep-dive">https://www.forasoft.com/learn/video-streaming/articles-streaming/ll-hls-deep-dive</a> · <a href="https://dev.to/masonwritescode/build-multi-cdn-failover-with-hls-content-steering-hlsjs-and-a-40-line-server-1l8i">https://dev.to/masonwritescode/build-multi-cdn-failover-with-hls-content-steering-hlsjs-and-a-40-line-server-1l8i</a> · <a href="https://www.infoq.cn/article/gG2hKhBv5YpgmhX6H9pQ">https://www.infoq.cn/article/gG2hKhBv5YpgmhX6H9pQ</a></p>
+<h2 id="ap1-4-弱网技术-分发侧">4. 弱网技术（分发侧）</h2><ul>
+<li>LL-HLS（TCP，有缓冲兜底）vs WebRTC（UDP + NACK/FEC，对丢包敏感）；策略：互动用 WebRTC，大盘 LL-HLS/FLV，互相降级。</li>
+<li>腾讯云弱网手段：码率自适应；丢帧 B→P→I；SVC；FEC + ARQ；PacedSender；BBR；302 调度；QUIC/SRT。</li>
+<li>SRT 贡献链路：1s 缓冲可恢复 ~25% 丢包；OBS latency ≥ 2.5×RTT。</li>
+<li>直播 ABR 阶梯（H.264）：1080p 4.5M / 720p 2.5M / 540p 1.4M / 360p 0.7M / 纯音频 64–96k。</li>
+<li>纯音频降级作为最低档。</li>
+<li>跨境就近接入：推流端接本地 PoP，跨境走专线；播放端 HTTPDNS/302 按 IP 调度；内地观众落 ICP CDN。</li>
+</ul>
+<h2 id="ap1-5-本地开发推流工具">5. 本地开发推流工具</h2><p>FFmpeg 9.0.1（2026-08-12）；8.0 起内置 WHIP muxer。</p>
+<figure class="code" data-lang="bash"><div class="code-bar"><span>bash</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-comment"># RTMP 循环推送</span>
+ffmpeg -re -stream_loop -1 -i test.mp4 -c copy -f flv rtmp://localhost:1935/live/test
+<span class="hljs-comment"># SRT（MediaMTX 8890）</span>
+ffmpeg -re -stream_loop -1 -i test.mp4 -c copy -f mpegts <span class="hljs-string">&#x27;srt://localhost:8890?streamid=publish:live/test&amp;pkt_size=1316&#x27;</span>
+<span class="hljs-comment"># WHIP（MediaMTX 8889）</span>
+ffmpeg -re -stream_loop -1 -i test.mp4 -c:v libx264 -pix_fmt yuv420p -preset ultrafast -tune zerolatency -g 60 -b:v 1500k -c:a libopus -ar 48000 -ac 2 -b:a 128k -f whip http://localhost:8889/live/test/whip</code></pre></figure><p>OBS 32.2.2：RTMP Server <code>rtmp://localhost/live</code> Key <code>test</code>；WHIP Server <code>http://localhost:8889/live/test/whip</code>；SRT <code>srt://localhost:8890?streamid=publish:live/test&amp;mode=caller&amp;latency=120000</code>。</p>
+<h2 id="ap1-recommendations">Recommendations</h2><h3 id="ap1-a-本地开发栈">(a) 本地开发栈</h3><p>MediaMTX 1.21.0 + FFmpeg + OBS；hls.js（LL-HLS）+ 原生 WHEP。</p>
+<figure class="code" data-lang="yaml"><div class="code-bar"><span>yaml</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-attr">services:</span>
+  <span class="hljs-attr">mediamtx:</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">bluenviron/mediamtx:1.21.0-ffmpeg</span>
+    <span class="hljs-attr">ports:</span> [<span class="hljs-string">&quot;8554:8554&quot;</span>,<span class="hljs-string">&quot;1935:1935&quot;</span>,<span class="hljs-string">&quot;8888:8888&quot;</span>,<span class="hljs-string">&quot;8889:8889&quot;</span>,<span class="hljs-string">&quot;8890:8890/udp&quot;</span>,<span class="hljs-string">&quot;8189:8189/udp&quot;</span>]
+    <span class="hljs-attr">environment:</span>
+      <span class="hljs-attr">MTX_HLSVARIANT:</span> <span class="hljs-string">lowLatency</span>
+      <span class="hljs-attr">MTX_HLSPARTDURATION:</span> <span class="hljs-string">500ms</span>
+      <span class="hljs-attr">MTX_WEBRTCADDITIONALHOSTS:</span> <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>
+      <span class="hljs-attr">MTX_API:</span> <span class="hljs-string">&quot;yes&quot;</span></code></pre></figure><p>播放：<code>http://localhost:8888/live/test/index.m3u8</code>（LL-HLS）、<code>http://localhost:8889/live/test/whep</code>。HTTP-FLV 用 <code>ossrs/srs:6</code>。</p>
+<h3 id="ap1-b-生产云栈">(b) 生产云栈</h3><ol>
+<li>双主云 + 一海外云：内地 阿里云直播（FLV/HLS + RTS + LL-HLS 封装）或腾讯云 CSS + LEB；海外 Cloudflare Stream；&lt;300ms 互动用 AWS IVS Real-Time。</li>
+<li>跨境链路：推流端就近接入；跨境同步走 GA / GAAP 专线。</li>
+<li>多 CDN：自建调度服务按 IP 地理 + 实时 QoE 返回 2–3 条 pathway；Web 用 HLS Content Steering；内地固定境内 CDN，海外默认 Cloudflare。</li>
+<li>协议策略：大盘 LL-HLS（海外）/ FLV+LL-HLS（内地）；带货/连麦 WebRTC，失败降级 LL-HLS；最低档纯音频。</li>
+</ol>
+<h3 id="ap1-c-参考架构">(c) 参考架构</h3><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">主播 OBS/App ──RTMP/SRT/WHIP──▶ 就近 Ingest PoP（跨境经 GA/GAAP 专线）
+        ▼
+ 转码/封装 Origin：5 档 ABR(1080p→audio-only)
+   ├─ LL-HLS(fMP4, part 500ms) ──▶ 内地 CDN + Cloudflare + CloudFront
+   ├─ HTTP-FLV(2-3s)           ──▶ 内地 CDN
+   └─ WebRTC(&lt;1s)              ──▶ 各云实时边缘
+        ▼
+ 调度服务(HTTPDNS/302 + Content Steering，输入播放器 QoE 上报)
+        ▼
+ React+TS 播放器：hls.js / mpegts.js / 原生 WHEP；弱网降档→纯音频；失败切 pathway；上报 QoE</code></pre></figure><p>未能核实：火山引擎单价；腾讯云 LL-HLS 境外可用性；Cloudflare–JD Cloud 续约条款。</p>
+</details>
+</section>
+<section class="chapter appendix" id="ap2">
+  <header class="chapter-head"><span class="eyebrow">附录 C · 调研报告（2026-09-13）</span><h1>直播互动层技术调研报告（2026-09）</h1></header>
+  <details class="prose"><summary>展开报告全文</summary><blockquote>
+<p>版本号来自 npm registry（2026-09-13）或引用页面。</p>
+</blockquote>
+<h2 id="ap2-1-实时传输与后端扇出">1. 实时传输与后端扇出</h2><h3 id="ap2-1-1-浏览器传输能力">1.1 浏览器传输能力</h3><div class="table-wrap"><table><thead><tr><th>传输</th><th>支持情况</th><th>适用性</th></tr></thead><tbody><tr><td>WebSocket</td><td>全平台</td><td>聊天/弹幕默认</td></tr><tr><td>SSE</td><td>全平台（单向）</td><td>只读观众流的降级</td></tr><tr><td>WebTransport</td><td>Chrome 97+ / Firefox 114+ / Safari 26.4+（2026-03）；Baseline（<a href="https://caniuse.com/webtransport">caniuse</a>）</td><td>渐进增强，仍需 WS 回退</td></tr></tbody></table></div><h3 id="ap2-1-2-node-后端选型">1.2 Node 后端选型</h3><div class="table-wrap"><table><thead><tr><th>方案</th><th>版本</th><th>要点</th></tr></thead><tbody><tr><td><code>ws</code></td><td>8.21.3</td><td>标准库级；2026 年有两个 CVE 已修</td></tr><tr><td>uWebSockets.js</td><td>v20.69.0（2024-07）</td><td>单作者；~5 KB/连接、单节点 ~100 万连接 vs Socket.IO ~52 KB/连接（<a href="https://anycable.io/compare/nodejs-websocket/">AnyCable benchmark</a>）</td></tr><tr><td>Socket.IO</td><td>4.8.3</td><td>Connection State Recovery（offset，默认 2 min）；Redis Streams 适配器</td></tr><tr><td>Centrifugo</td><td>v6.9.5（2026-09-13）；JS SDK <code>centrifuge</code> 5.7.4</td><td>Go 单体，channels/presence/history/JWT 内置；<code>offset</code>+<code>epoch</code> 恢复；v6 支持 WebTransport（<a href="https://centrifugal.dev/docs/server/history_and_recovery">docs</a>）</td></tr></tbody></table></div><h3 id="ap2-1-3-大厂公开架构">1.3 大厂公开架构</h3><ul>
+<li>Twitch：Edge（IRC over WS）+ Pubsub 分层树状扇出（<a href="https://blog.twitch.tv/en/2015/12/18/twitch-engineering-an-introduction-and-overview-a23917b71a25/">Twitch Engineering</a>）。</li>
+<li>B站 goim：Comet（接入）/ Logic（鉴权路由）/ Job（消费 Kafka 按房间推送）；弹幕 WS 协议 16 字节头、30 s 心跳、body zlib/brotli（<a href="https://cloud.tencent.cn/developer/article/1679213">腾讯云文章</a>、<a href="https://daidr.me/archives/code-526.html">协议分析</a>）。</li>
+<li>美拍：大房间按时间窗和条数收紧；房间过大时从&quot;定向通知&quot;降级为&quot;广播&quot;（<a href="https://cloud.tencent.com/developer/article/1194235">腾讯云文章</a>）。</li>
+</ul>
+<h3 id="ap2-1-4-热门房间消息速率控制模式">1.4 热门房间消息速率控制模式</h3><ol>
+<li>服务端分档：按在线人数分级每秒下发上限；礼物/系统/主播消息 100% 下发，普通弹幕抽样。</li>
+<li>优先级通道：<code>room:123:gift</code> / <code>room:123:chat</code> 分离。</li>
+<li>批量帧：100–200 ms tick 聚合成数组一次下发。</li>
+<li>客户端限流：只 render 可见轨道容量（30–50 条/s）。</li>
+<li>重连：指数退避 + jitter（1 s→20 s），<code>offset/epoch</code> 恢复。</li>
+<li>心跳：客户端 25–30 s ping，服务端 2 倍超时踢出。</li>
+</ol>
+<h2 id="ap2-2-web-弹幕渲染">2. Web 弹幕渲染</h2><div class="table-wrap"><table><thead><tr><th>库</th><th>版本</th><th>状态</th></tr></thead><tbody><tr><td><code>danmaku</code>（weizhenye）</td><td>2.0.10（2026-08）</td><td>活跃；DOM 与 Canvas 双引擎，支持绑定 <code>&lt;video&gt;</code> 或实时模式（<a href="https://github.com/weizhenye/Danmaku">repo</a>）</td></tr><tr><td>CommentCoreLibrary</td><td>0.11.1，7 年未更新</td><td>停滞</td></tr><tr><td>rc-danmaku</td><td>1.2.0-alpha.1（2024-08），仅 React 17/18</td><td>不建议</td></tr></tbody></table></div><p>性能技术：</p>
+<ul>
+<li>DOM 路线：<code>transform: translate3d</code> + <code>will-change</code>；节点池复用；文本可选。</li>
+<li>Canvas 路线：单层 canvas + rAF；<code>OffscreenCanvas.transferControlToOffscreen()</code> 移到 Worker。</li>
+<li>轨道分配：N 条 lane，每 lane 记录&quot;最后一条弹幕右端离开时刻&quot;，追尾判定 <code>(lane.lastEndX - stageWidth) / lastSpeed &lt; newWidth / newSpeed</code>。</li>
+<li>掉帧适应：<code>dt = now - lastFrame</code>；<code>dt &gt; 100 ms</code> 清空积压。</li>
+<li>Tab 隐藏：<code>visibilitychange</code> 暂停 rAF 并丢弃队列。</li>
+</ul>
+<h2 id="ap2-3-主播互动功能与礼物动画">3. 主播互动功能与礼物动画</h2><ul>
+<li>TikTok LIVE：Multi-guest 5 人、Co-host 3 位；投票/Q&amp;A。</li>
+<li>B站：PK、天选抽奖、连麦、红包；网页端观众无连麦入口。</li>
+<li>YouTube：Super Chat 置顶；主播置顶单条消息；投票。</li>
+<li>Twitch：Slow/Followers-only/Subs-only、Shield Mode、AutoMod。</li>
+</ul>
+<p>连麦信令：邀请 → 接受 → 服务端发 <code>cohost.token</code> → join RTC → 广播 <code>cohost.state</code> → 挂断清理。</p>
+<p>礼物动画格式（<a href="https://github.com/yylive/YYEVA/blob/main/Live%20room%20animation%20solutions.md">YYEVA 对比</a>）：</p>
+<div class="table-wrap"><table><thead><tr><th>格式</th><th>Web 库</th><th>版本</th><th>定位</th></tr></thead><tbody><tr><td>Lottie</td><td><code>lottie-web</code></td><td>5.13.0</td><td>小体积，简单特效</td></tr><tr><td>PAG</td><td><code>libpag</code>（WASM）</td><td>4.5.85</td><td>AE 导出更全</td></tr><tr><td>SVGA</td><td><code>svga</code></td><td>2.1.1（2026-08）</td><td>压缩 85–90%，性能好</td></tr><tr><td>Alpha-MP4 / YYEVA / VAP</td><td>yyeva-web</td><td>—</td><td>任意效果含 3D，适合大礼物</td></tr></tbody></table></div><h2 id="ap2-4-虚拟币支付流程与本地-mock">4. 虚拟币支付流程与本地 Mock</h2><ul>
+<li>Stripe 2026：Checkout 与 Payment Element 合并为 Checkout Sessions API 三种 <code>ui_mode</code>；API 版本 <code>2026-06-24.dahlia</code>（<a href="https://docs.stripe.com/payments/payment-element/migration">Stripe</a>）。</li>
+<li>支付宝手机网站支付 Form 跳转回跳；微信 H5 支付仅限手机浏览器非微信内（<a href="https://pay.weixin.qq.com/doc/v3/merchant/4012791832">微信支付文档</a>）。</li>
+</ul>
+<p>推荐流程：<code>充值下单(orderId=ULID)</code> → 支付渠道 → Webhook 验签 → 幂等入账（<code>payment_events</code> 唯一键 = provider event id）→ 双式账本 → 送礼 <code>POST /gifts {giftId, roomId, idempotencyKey}</code> → 服务端查价 → 单事务 <code>wallet debit + creator credit + gift_orders</code> → 发布 <code>gift.sent</code>。</p>
+<p>本地 Mock：自建 <code>mock-pay</code> 页面点&quot;支付成功&quot;后异步 POST 带 HMAC 的 webhook，可注入重复投递、乱序、延迟。</p>
+<p>反欺诈基线：服务端定价、订单幂等、<code>UPDATE ... WHERE balance &gt;= price</code>、速率限制；前端乐观扣减 + 失败回滚。</p>
+<h2 id="ap2-5-运营工具">5. 运营工具</h2><p>主播控制台：推流地址/Stream Key、健康度（码率/帧率/丢帧）、禁言/踢出/关键词过滤/慢速模式、置顶、公告、投票/抽奖、连麦邀请、收益。
+管理后台：房间列表 + 实时在线、消息速率、礼物流水、QoE、审核队列。
+React 后台 UI：Ant Design 6.6.3 + Pro Components；Refine 5.0.12；shadcn-admin 模板。</p>
+<h2 id="ap2-6-前端栈版本-2026-09-13">6. 前端栈版本（2026-09-13）</h2><div class="table-wrap"><table><thead><tr><th>包</th><th>版本</th></tr></thead><tbody><tr><td>react / react-dom</td><td>19.3.0</td></tr><tr><td>vite</td><td>8.3.0（Rolldown，Node 20.19+/22.12+）</td></tr><tr><td>tailwindcss</td><td>4.3.3</td></tr><tr><td>zustand</td><td>5.0.15</td></tr><tr><td>jotai</td><td>3.0.0（刚出大版本，谨慎）</td></tr><tr><td>@tanstack/react-query</td><td>5.102.8</td></tr><tr><td>partysocket</td><td>1.3.0</td></tr></tbody></table></div><h2 id="ap2-7-recommendations">7. Recommendations</h2><ol>
+<li>传输 + 扇出：WebSocket；后端 Centrifugo v6.9.x 作接入层 或 纯 Node <code>ws</code> + Redis Pub/Sub 自建。</li>
+<li>速率控制：每房间 <code>gift</code>/<code>chat</code> 两个 channel；150 ms 批帧；大房间抽样普通弹幕；心跳 25 s。</li>
+<li>弹幕渲染：<code>danmaku</code> 2.0.10 Canvas 引擎 或 自研 Canvas；超过 500 条/s 移入 Worker。</li>
+<li>礼物动画：默认 SVGA，大礼物 alpha-MP4，轻量用 Lottie。</li>
+<li>支付 Mock：自建 <code>mock-pay</code> + HMAC webhook + 双式账本 + 幂等表。</li>
+<li>后台：Ant Design 6 + Refine 5；主播台与观众端共用 shadcn/ui + Tailwind 4。</li>
+<li>前端栈：React 19.3 + Vite 8.3 + TS + Tailwind 4.3；Zustand 5 + TanStack Query 5。</li>
+</ol>
+</details>
+</section>
+<section class="chapter appendix" id="ap3">
+  <header class="chapter-head"><span class="eyebrow">附录 D · 调研报告（2026-09-13）</span><h1>浏览器直播播放器 QoE 监控 / 埋点 / 异常采集 —— 2026-09 现状调研</h1></header>
+  <details class="prose"><summary>展开报告全文</summary><blockquote>
+<p>版本号/日期于 2026-09-13 通过 npm registry、GitHub 与官方文档核对。</p>
+</blockquote>
+<h2 id="ap3-1-行业-qoe-指标定义">1. 行业 QoE 指标定义</h2><p><strong>起播时间（Startup Time）</strong></p>
+<ul>
+<li>Mux：Video Startup Time = 用户意图播放→首帧；Player Startup Time；Page Load Time；建议 &lt;2s，&lt;1s 优秀（<a href="https://www.mux.com/blog/the-video-startup-time-metric-explained">Mux</a>）。</li>
+<li>Bitmovin：Startup Score = <code>100·(1-(VST-300)/19700)²</code>（<a href="https://developer.bitmovin.com/playback/docs/the-bitmovin-playback-score">Bitmovin</a>）。</li>
+<li>阿里云：&quot;首帧耗时 = AVG(首帧显示时间 − 调用start时间)&quot;；&quot;秒开率 = 首帧≤1000ms 次数 ÷ 实际播放量&quot;；&quot;慢开率 = 首帧≥3000ms&quot;（<a href="https://www.alibabacloud.com/help/zh/vod/user-guide/metric-description">阿里云</a>）。</li>
+<li>CMCD v2 <code>msd</code>（Media Start Delay）。</li>
+</ul>
+<p><strong>卡顿（Rebuffering）</strong></p>
+<ul>
+<li>Mux Rebuffering Percentage = 卡顿态时长 ÷ 总观看时长；直播 &lt;1%，&gt;3% 严重（<a href="https://www.mux.com/docs/guides/monitoring-metrics">Mux</a>）。</li>
+<li>Conviva = <code>rebufferingTime / (playTime + rebufferingTime)</code>，排除首帧前与暂停，&lt;200ms 微卡顿计入（<a href="https://docs.conviva.ai/vsi-video/metric-dictionary/rebuffering-ratio/">Conviva</a>）。</li>
+<li>阿里云：&quot;百秒卡顿时长 = (卡顿总时长 ÷ 观看总时长) × 100&quot;；&quot;百秒卡顿次数&quot;；&quot;次数卡顿率 = 发生过卡顿的播放量 ÷ 实际播放量&quot;。</li>
+<li>字节系&quot;卡顿人头&quot;口径：累计卡顿/在线时长 ≥5% 记为卡顿用户。</li>
+</ul>
+<p><strong>失败/退出</strong></p>
+<ul>
+<li>Mux Playback Failure % = 致命错误 view ÷ 总 view；EBVS = 点击 play 但从未首帧且等待 ≥1s（<a href="https://www.mux.com/docs/guides/data-playback-success-metric">Mux</a>）。目标失败率 &lt;0.5%。</li>
+</ul>
+<p><strong>直播延迟</strong>：<code>EXT-X-PROGRAM-DATE-TIME</code> 与 UTC 比较（<a href="https://www.mux.com/blog/live-latency-metric">Mux</a>）；CMCD v2 <code>ltc</code>；player→edge 用 hls.js <code>hls.latency</code>。</p>
+<p><strong>掉帧</strong>：<code>getVideoPlaybackQuality()</code> <code>totalVideoFrames / droppedVideoFrames</code>；<code>requestVideoFrameCallback()</code> 2024-10 Baseline。</p>
+<h2 id="ap3-2-cmcd-cmsd">2. CMCD / CMSD</h2><ul>
+<li>CMCD v2 = CTA-5004-B，2026-04-14；Request/Response/Event 三模式；新键 <code>ltc, msd, sta, bs, ttfb, ...</code>（<a href="https://cta-wave.github.io/Resources/common-media-client-data--cta-5004-b.html">CTA-5004-B</a>）。</li>
+<li>hls.js v1.7.0 支持 CMCD v2：<code>cmcd.version: 2</code> + <code>cmcd.eventTargets</code>；dash.js 5.2 完整；Shaka 4.16+。</li>
+<li>CDN：Akamai AMD、CloudFront real-time logs（2024-04）提供 CMCD 字段；Cloudflare 无公开文档。</li>
+<li>CMSD = CTA-5006，<code>CMSD-Static/CMSD-Dynamic</code> 响应头。</li>
+</ul>
+<h2 id="ap3-3-浏览器遥测-sdk">3. 浏览器遥测 SDK</h2><div class="table-wrap"><table><thead><tr><th>方案</th><th>版本</th><th>要点</th></tr></thead><tbody><tr><td><code>@opentelemetry/sdk-trace-web</code></td><td>2.11.0</td><td>稳定；logs 0.222.0 experimental</td></tr><tr><td><code>@opentelemetry/browser-sdk</code></td><td>0.4.0</td><td>实验性 browser 专用 SDK</td></tr><tr><td>OTLP HTTP exporter</td><td>0.222.0</td><td>已移除 sendBeacon，改用 <code>fetch keepalive</code>；卸载靠 <code>visibilitychange → forceFlush()</code></td></tr><tr><td>Grafana Faro</td><td>2.11.0</td><td>开源；Alloy <code>faro.receiver</code> → Loki/Tempo</td></tr><tr><td>Sentry</td><td>10.74.0</td><td>自托管重；session replay</td></tr><tr><td>PostHog</td><td>1.430.3</td><td>开源可自托管，events + replay + flags</td></tr><tr><td>ClickStack/HyperDX</td><td>0.26.0</td><td>OTel-native，直连 ClickHouse</td></tr></tbody></table></div><h2 id="ap3-4-存储-看板">4. 存储 / 看板</h2><ul>
+<li>ClickHouse 26.8 LTS（2026-09-01）；Grafana 13.2.1；ClickHouse datasource 4.20.0。</li>
+<li>不用 Prometheus 存事件：label 维度爆炸且无法按会话重算 p95。</li>
+</ul>
+<p>事件表：</p>
+<figure class="code" data-lang="sql"><div class="code-bar"><span>sql</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-keyword">CREATE TABLE</span> qoe.events (
+  ts DateTime64(<span class="hljs-number">3</span>), event LowCardinality(String),
+  session_id String, view_id String, user_id_hash String,
+  stream_id LowCardinality(String), protocol LowCardinality(String),
+  player LowCardinality(String), player_ver LowCardinality(String),
+  cdn LowCardinality(String), region LowCardinality(String), isp LowCardinality(String),
+  os LowCardinality(String), browser LowCardinality(String), net_type LowCardinality(String),
+  value_ms UInt32, bitrate_kbps UInt32, level Int16, buffer_ms UInt32, latency_ms UInt32,
+  dropped_frames UInt32, total_frames UInt32,
+  err_type LowCardinality(String), err_detail LowCardinality(String), fatal UInt8,
+  attrs Map(LowCardinality(String), String)
+) ENGINE <span class="hljs-operator">=</span> MergeTree <span class="hljs-keyword">PARTITION</span> <span class="hljs-keyword">BY</span> toDate(ts)
+<span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> (stream_id, event, ts, session_id) TTL ts <span class="hljs-operator">+</span> <span class="hljs-type">INTERVAL</span> <span class="hljs-number">30</span> <span class="hljs-keyword">DAY</span>;</code></pre></figure><p>查询示例：</p>
+<figure class="code" data-lang="sql"><div class="code-bar"><span>sql</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs"><span class="hljs-comment">-- p50/p95 起播，按 CDN×ISP</span>
+<span class="hljs-keyword">SELECT</span> toStartOfFiveMinutes(ts) m, cdn, isp, quantiles(<span class="hljs-number">0.5</span>,<span class="hljs-number">0.95</span>)(value_ms)
+<span class="hljs-keyword">FROM</span> qoe.events <span class="hljs-keyword">WHERE</span> event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;first_frame&#x27;</span> <span class="hljs-keyword">AND</span> ts <span class="hljs-operator">&gt;=</span> now()<span class="hljs-operator">-</span><span class="hljs-type">INTERVAL</span> <span class="hljs-number">1</span> <span class="hljs-keyword">HOUR</span> <span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> m,cdn,isp <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> m;
+<span class="hljs-comment">-- 百秒卡顿时长 &amp; 次数卡顿率</span>
+<span class="hljs-keyword">SELECT</span> <span class="hljs-number">100</span><span class="hljs-operator">*</span>sumIf(value_ms,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;stall_end&#x27;</span>)<span class="hljs-operator">/</span><span class="hljs-number">1000</span> <span class="hljs-operator">/</span> (sumIf(value_ms,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;heartbeat&#x27;</span>)<span class="hljs-operator">/</span><span class="hljs-number">1000</span>) <span class="hljs-keyword">AS</span> stall_per_100s,
+       <span class="hljs-number">100</span><span class="hljs-operator">*</span>uniqIf(view_id,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;stall_end&#x27;</span>)<span class="hljs-operator">/</span>uniqIf(view_id,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;play_attempt&#x27;</span>) <span class="hljs-keyword">AS</span> stall_view_pct
+<span class="hljs-keyword">FROM</span> qoe.events <span class="hljs-keyword">WHERE</span> ts <span class="hljs-operator">&gt;=</span> now()<span class="hljs-operator">-</span><span class="hljs-type">INTERVAL</span> <span class="hljs-number">15</span> <span class="hljs-keyword">MINUTE</span>;
+<span class="hljs-comment">-- 播放失败率 &amp; EBVS</span>
+<span class="hljs-keyword">WITH</span> v <span class="hljs-keyword">AS</span> (<span class="hljs-keyword">SELECT</span> view_id, maxIf(<span class="hljs-number">1</span>,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;first_frame&#x27;</span>) ff, maxIf(<span class="hljs-number">1</span>,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;error&#x27;</span> <span class="hljs-keyword">AND</span> fatal<span class="hljs-operator">=</span><span class="hljs-number">1</span>) fe,
+           maxIf(<span class="hljs-number">1</span>,event<span class="hljs-operator">=</span><span class="hljs-string">&#x27;end&#x27;</span> <span class="hljs-keyword">AND</span> value_ms<span class="hljs-operator">&gt;=</span><span class="hljs-number">1000</span>) ex <span class="hljs-keyword">FROM</span> qoe.events
+           <span class="hljs-keyword">WHERE</span> ts<span class="hljs-operator">&gt;=</span>now()<span class="hljs-operator">-</span><span class="hljs-type">INTERVAL</span> <span class="hljs-number">1</span> <span class="hljs-keyword">HOUR</span> <span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> view_id)
+<span class="hljs-keyword">SELECT</span> <span class="hljs-number">100</span><span class="hljs-operator">*</span><span class="hljs-built_in">avg</span>(fe) failure_pct, <span class="hljs-number">100</span><span class="hljs-operator">*</span><span class="hljs-built_in">avg</span>(ff<span class="hljs-operator">=</span><span class="hljs-number">0</span> <span class="hljs-keyword">AND</span> fe<span class="hljs-operator">=</span><span class="hljs-number">0</span> <span class="hljs-keyword">AND</span> ex<span class="hljs-operator">=</span><span class="hljs-number">1</span>) ebvs_pct <span class="hljs-keyword">FROM</span> v;</code></pre></figure><h2 id="ap3-5-错误分类与异常捕获">5. 错误分类与异常捕获</h2><ul>
+<li>hls.js <code>ErrorTypes</code> NETWORK/MEDIA/KEY_SYSTEM/MUX/OTHER；<code>ErrorDetails</code> ~50 项；<code>data.fatal</code> 决定 <code>recoverMediaError()</code>/重建；<code>BUFFER_STALLED_ERROR</code> 是卡顿计数源。</li>
+<li>mpegts.js：<code>ErrorTypes</code> NETWORK/MEDIA/OTHER；<code>STATISTICS_INFO</code> 提供 speed/droppedFrames。</li>
+<li>WebRTC：<code>connectionState</code> <code>failed</code> 需 <code>restartIce()</code>；<code>getStats()</code> inbound-rtp <code>framesDropped/jitterBufferDelay/packetsLost/freezeCount</code>。</li>
+<li>MSE <code>QuotaExceededError</code>：移除 back-buffer 后重试或降档。</li>
+<li>现场采集：致命错误时上传 500 条环形日志 + <code>performance.getEntriesByType(&#39;resource&#39;)</code> 最近 60s 瀑布；&quot;报障&quot;按钮强制 100% 采样。</li>
+<li>SLO 告警：多窗口 burn-rate。</li>
+</ul>
+<h2 id="ap3-6-弱网优化-可度量">6. 弱网优化（可度量）</h2><ul>
+<li>hls.js：<code>maxLiveSyncPlaybackRate</code> 1.05–1.1 追帧、<code>liveSyncOnStallIncrease 1</code>、<code>maxBufferHole 0.1</code>、<code>nudgeOffset/nudgeMaxRetry</code>、<code>abrEwmaDefaultEstimate</code>、<code>abrSwitchInterval</code>、<code>errorPenaltyExpireMs</code>。</li>
+<li>mpegts.js：<code>liveBufferLatencyChasing</code>、<code>liveBufferLatencyMaxLatency 1.5</code>、<code>liveSync</code>。</li>
+<li>卡顿恢复阶梯：nudge → 降档 → seek-to-live → 协议降级 WebRTC→LL-HLS→HLS（每步打 <code>recovery_action</code> 事件）。</li>
+<li>Network Information API 仅 Chromium。</li>
+<li>A/B：OpenFeature v0.9.0；<code>@openfeature/web-sdk</code> 1.10.0；flag 变体作事件维度。</li>
+</ul>
+<h2 id="ap3-7-直播间页面性能">7. 直播间页面性能</h2><ul>
+<li><code>web-vitals</code> 6.2.1：INP/LCP/CLS；<code>visibilitychange</code> 批量 <code>sendBeacon</code>。</li>
+<li>播放器内核 <code>import()</code> 按协议懒加载（<code>hls.light.mjs</code>）；<code>preconnect</code> 到 CDN；LCP 元素设为海报图。</li>
+</ul>
+<h2 id="ap3-recommendations">Recommendations</h2><p>指标定义：</p>
+<ul>
+<li>TTFF_click = t(首帧) − t(点击/autoplay)；秒开率 = ≤1000ms 占比。</li>
+<li>卡顿：<code>waiting</code>→<code>playing</code> ≥200ms，排除首帧前与 seek/暂停；百秒卡顿时长；卡顿率(view)；卡顿用户率(≥5%)。</li>
+<li>失败率 = fatal error view ÷ play_attempt；EBVS。</li>
+<li>延迟：E2E = now − PDT(currentTime)；player-edge = bufferedEnd − currentTime。</li>
+<li>掉帧率 = Δdropped/Δtotal（10s heartbeat）。</li>
+</ul>
+<p>SDK 设计：事件 <code>video.play_attempt, first_frame, stall_start, stall_end, level_switch, latency_sample, heartbeat(10s), error, recovery_action, end, report_issue</code>；公共维度 session_id/view_id/stream_id/protocol/player/cdn/region/isp/os/browser/net_type/flag_variants；CMCD <code>sid</code> = session_id。传输：内存队列 ≥20 条或 5s 批发，<code>fetch keepalive</code>，hidden 立即 flush。采样：heartbeat 10–20%，error/first_frame 100%。</p>
+<p>管线：collector → ClickHouse 26.8 → Grafana 13.2 + ClickHouse datasource。</p>
+<p>告警：起播 p95 &gt;3s 10m；百秒卡顿 &gt;3 5m；失败率 &gt;1%；EBVS &gt;5%；CDN/ISP 错误占比 &gt;20%；延迟 p50 &gt; 目标×1.5。</p>
+</details>
+</section>
+    <footer class="colophon">LiveLab · 教程源文件位于 <span class="mono">docs/tutorial/*.md</span>，本页由 <span class="mono">build.mjs</span> 生成。</footer>
+  </main>
+</div>
+<script>(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('livelab.handbook.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('livelab.handbook.' + k, JSON.stringify(v)); } catch { /* private mode */ } },
+  };
+
+  // --- reading progress bar
+  const progress = $('#progress');
+  const onScroll = () => {
+    const h = document.documentElement;
+    const max = h.scrollHeight - h.clientHeight;
+    progress.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+  };
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // --- mobile TOC drawer
+  const toc = $('#toc');
+  const menu = $('#menu');
+  const setOpen = (open) => { toc.classList.toggle('is-open', open); menu.setAttribute('aria-expanded', String(open)); };
+  menu.addEventListener('click', () => setOpen(!toc.classList.contains('is-open')));
+  toc.addEventListener('click', (e) => { if (e.target.closest('a')) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+
+  // --- active chapter highlighting
+  const chapters = $$('.chapter');
+  const tocItems = new Map($$('.toc-list > li').map((li) => [li.dataset.ch, li]));
+  if ('IntersectionObserver' in window) {
+    const visible = new Map();
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) visible.set(en.target.id, en.isIntersecting ? en.intersectionRatio : 0);
+      let best = null, bestRatio = 0;
+      for (const [id, r] of visible) if (r > bestRatio) { best = id; bestRatio = r; }
+      if (!best) return;
+      for (const [id, li] of tocItems) li.classList.toggle('is-active', id === best);
+    }, { rootMargin: '-52px 0px -60% 0px', threshold: [0, 0.1, 0.25, 0.5] });
+    chapters.forEach((c) => io.observe(c));
+  }
+
+  // --- read marks (per viewer, localStorage)
+  const read = new Set(store.get('read', []));
+  $$('input[data-read]').forEach((cb) => {
+    cb.checked = read.has(cb.dataset.read);
+    tocItems.get(cb.dataset.read)?.classList.toggle('is-read', cb.checked);
+    cb.addEventListener('change', () => {
+      cb.checked ? read.add(cb.dataset.read) : read.delete(cb.dataset.read);
+      tocItems.get(cb.dataset.read)?.classList.toggle('is-read', cb.checked);
+      store.set('read', [...read]);
+    });
+  });
+
+  // --- search over TOC entries (chapters + h2)
+  const search = $('#search');
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    toc.classList.toggle('is-searching', q.length > 0);
+    $$('.toc-list > li').forEach((li) => {
+      const subs = $$('ul li', li);
+      let any = false;
+      subs.forEach((s) => { const hit = !q || s.textContent.toLowerCase().includes(q); s.classList.toggle('is-hidden', !hit); any = any || hit; });
+      const selfHit = !q || $('a', li).textContent.toLowerCase().includes(q);
+      li.classList.toggle('is-hidden', !(selfHit || any));
+    });
+  });
+
+  // --- copy buttons
+  $$('[data-copy]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('figure').querySelector('code').innerText;
+      try { await navigator.clipboard.writeText(code); btn.textContent = '已复制'; } catch { btn.textContent = '不可用'; }
+      setTimeout(() => { btn.textContent = '复制'; }, 1400);
+    });
+  });
+
+  // --- widget: protocol latency ladder (log axis 0.1s → 60s)
+  const PROTOS = {
+    hls:   { name: 'HLS',        lo: 5,   hi: 45,  transport: 'HTTP 分片（TCP）', cdn: '任意 HTTP CDN', ios: '原生', cost: '最低', use: '回放式直播、大型赛事重播' },
+    llhls: { name: 'LL-HLS',     lo: 2,   hi: 5,   transport: 'HTTP 分片 + Partial Segment + 阻塞式清单刷新', cdn: 'HTTP/2+，_HLS_msn/_HLS_part 进缓存键，回源合并', ios: '原生（无需 JS 播放器）', cost: '略高（请求数 ×10）', use: '直播带货、新闻、赛事' },
+    flv:   { name: 'HTTP-FLV',   lo: 1,   hi: 3,   transport: 'HTTP 长连接（TCP）', cdn: '长连接透传（国内 CDN 普遍支持）', ios: '仅 iOS 17.1+ 经 ManagedMediaSource', cost: '中', use: '国内秀场 / 游戏直播桌面端' },
+    whep:  { name: 'WebRTC（WHEP）', lo: 0.1, hi: 0.7, transport: 'UDP / SRTP + NACK/FEC', cdn: '需实时边缘（阿里 RTS、腾讯 LEB、Cloudflare、IVS RT）', ios: '原生 WebRTC（移动端多 100–250ms 抖动缓冲）', cost: '最高（按分钟计费）', use: '拍卖、连麦、互动竞猜' },
+  };
+  const protoWidget = $('[data-widget="protocols"]');
+  if (protoWidget) {
+    const range = $('#proto-range');
+    const facts = $('#proto-facts');
+    const pos = (s) => (Math.log10(s) - Math.log10(0.1)) / (Math.log10(60) - Math.log10(0.1)) * 100;
+    const show = (key) => {
+      const p = PROTOS[key];
+      range.style.left = pos(p.lo) + '%';
+      range.style.width = (pos(p.hi) - pos(p.lo)) + '%';
+      facts.innerHTML = [
+        ['端到端延迟', `${p.lo}–${p.hi} s`], ['传输', p.transport], ['CDN 要求', p.cdn], ['iOS Safari', p.ios], ['成本', p.cost], ['典型场景', p.use],
+      ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+      $$('.proto', protoWidget).forEach((b) => { const on = b.dataset.p === key; b.classList.toggle('is-on', on); b.setAttribute('aria-selected', String(on)); });
+    };
+    $$('.proto', protoWidget).forEach((b) => b.addEventListener('click', () => show(b.dataset.p)));
+    show('llhls');
+  }
+
+  // --- widget: cost worksheet (list prices checked 2026-09-13; see chapter 13 / appendix B)
+  const costWidget = $('[data-widget="cost"]');
+  if (costWidget) {
+    const num = (id) => Math.max(0, Number($(id).value) || 0);
+    const fmt = (n, cur) => (cur === '¥' ? '¥' : '$') + Math.round(n).toLocaleString('en-US');
+    const render = () => {
+      const viewers = num('#c-viewers'), hours = num('#c-hours'), mbps = num('#c-mbps'), rt = num('#c-rt');
+      const gb = (viewers * hours * 3600 * mbps) / 8 / 1000; // Mbps·s → MB → GB (decimal)
+      const minutes = viewers * hours * 60;
+      const rows = [
+        ['阿里云 视频直播 · 内地', '0.396 元/GB（0–10TB 档）', `${(gb / 1000).toFixed(1)} TB`, fmt(gb * 0.396, '¥')],
+        ['阿里云 视频直播 · 亚太 1', '0.812 元/GB', `${(gb / 1000).toFixed(1)} TB`, fmt(gb * 0.812, '¥')],
+        ['腾讯云 快直播 LEB · 内地', '0.52 元/GB（0–2TB 档）', `${(gb / 1000).toFixed(1)} TB`, fmt(gb * 0.52, '¥')],
+        ['Cloudflare Stream', '$1 / 1000 观看分钟', `${(minutes / 1e6).toFixed(2)} M 分钟`, fmt(minutes / 1000, '$')],
+        ['AWS IVS Real-Time（互动房间）', '$0.072 / 参会者小时', `${(rt * hours).toLocaleString('en-US')} 参会者小时`, fmt(rt * hours * 0.072, '$')],
+      ];
+      $('#c-body').innerHTML = rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('');
+    };
+    $$('input', costWidget).forEach((i) => i.addEventListener('input', render));
+    render();
+  }
+})();
+</script></body>
+</html>

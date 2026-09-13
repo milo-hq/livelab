@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.25.0",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
@@ -13,9 +15,12 @@
     "infra:up": "docker compose -f infra/docker-compose.yml up -d --remove-orphans",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:flv": "docker compose -f infra/docker-compose.yml --profile flv up -d",
-    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f --tail=50"
+    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f --tail=50",
+    "tutorial:build": "node docs/tutorial/build.mjs"
   },
   "devDependencies": {
+    "highlight.js": "^11.12.0",
+    "marked": "^17.0.6",
     "turbo": "^2.10.12",
     "typescript": "5.9.3",
     "vitest": "^5.0.0"
