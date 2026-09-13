@@ -1,0 +1,2 @@
+[0:v]drawtext=text='%{localtime} LiveLab':fontsize=56:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=12:x=40:y=40,split=3[vmain][v720][v360];
+[v360]scale=640:360[v360s]

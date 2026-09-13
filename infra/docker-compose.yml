@@ -1,0 +1,108 @@
+name: livelab
+
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:1.21.0
+    container_name: livelab-mediamtx
+    restart: unless-stopped
+    ports:
+      - "1935:1935"       # RTMP ingest
+      - "8554:8554"       # RTSP
+      - "8888:8888"       # HLS / LL-HLS
+      - "8889:8889"       # WebRTC WHIP/WHEP (HTTP signaling)
+      - "8189:8189/udp"   # WebRTC ICE UDP
+      - "8189:8189/tcp"   # WebRTC ICE TCP
+      - "8890:8890/udp"   # SRT
+      - "9997:9997"       # API
+      - "9998:9998"       # Prometheus metrics
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+
+  pusher:
+    image: linuxserver/ffmpeg:latest
+    container_name: livelab-pusher
+    restart: unless-stopped
+    depends_on:
+      - mediamtx
+    entrypoint: ["/bin/sh", "/push.sh"]
+    environment:
+      TARGET: rtmp://mediamtx:1935/live
+      TZ: ${TZ:-Asia/Shanghai}   # burned-in clock should match the viewer's wall clock
+    volumes:
+      - ./pusher/push.sh:/push.sh:ro
+      - ./pusher/filter.txt:/filter.txt:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: livelab-redis
+    restart: unless-stopped
+    ports:
+      - "6390:6379"   # host 6390 (6379 is often taken by other projects)
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8
+    container_name: livelab-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: livelab
+      CLICKHOUSE_DB: qoe
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    volumes:
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - clickhouse-data:/var/lib/clickhouse
+
+  grafana:
+    image: grafana/grafana:13.2.1
+    container_name: livelab-grafana
+    restart: unless-stopped
+    depends_on:
+      - clickhouse
+    ports:
+      - "3000:3000"
+    environment:
+      GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+
+  # --- optional: SRS for HTTP-FLV (pnpm infra:flv) ---------------------------
+  srs:
+    profiles: ["flv"]
+    image: ossrs/srs:6
+    container_name: livelab-srs
+    restart: unless-stopped
+    command: ["./objs/srs", "-c", "conf/docker.conf"]
+    ports:
+      - "1936:1935"   # RTMP ingest (host port 1936 to avoid clashing with MediaMTX)
+      - "1985:1985"   # API
+      - "8080:8080"   # HTTP-FLV
+    volumes:
+      - ./srs.conf:/usr/local/srs/conf/docker.conf:ro
+
+  pusher-srs:
+    profiles: ["flv"]
+    image: linuxserver/ffmpeg:latest
+    container_name: livelab-pusher-srs
+    restart: unless-stopped
+    depends_on:
+      - srs
+    entrypoint: ["/bin/sh", "/push.sh"]
+    environment:
+      TARGET: rtmp://srs:1935/live
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./pusher/push.sh:/push.sh:ro
+      - ./pusher/filter.txt:/filter.txt:ro
+
+volumes:
+  clickhouse-data:
+  grafana-data:

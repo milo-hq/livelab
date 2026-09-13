@@ -1,0 +1,16 @@
+apiVersion: 1
+datasources:
+  - name: ClickHouse
+    uid: clickhouse-qoe
+    type: grafana-clickhouse-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+      host: clickhouse
+      port: 8123
+      protocol: http
+      secure: false
+      username: default
+      defaultDatabase: qoe
+    secureJsonData:
+      password: livelab

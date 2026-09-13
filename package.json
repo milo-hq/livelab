@@ -10,7 +10,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d --remove-orphans",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:flv": "docker compose -f infra/docker-compose.yml --profile flv up -d",
     "infra:logs": "docker compose -f infra/docker-compose.yml logs -f --tail=50"

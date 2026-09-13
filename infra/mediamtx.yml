@@ -1,0 +1,57 @@
+# MediaMTX 1.21.0 configuration for LiveLab local development.
+# Only keys that differ from the upstream defaults are listed; every key below exists in
+# https://raw.githubusercontent.com/bluenviron/mediamtx/v1.21.0/mediamtx.yml
+logLevel: info
+
+# DEV ONLY: allow API / metrics from any IP so the api container and host tooling can query path health.
+authMethod: internal
+authInternalUsers:
+  - user: any
+    pass:
+    ips: []
+    permissions:
+      - action: publish
+      - action: read
+      - action: playback
+      - action: api
+      - action: metrics
+
+api: true
+apiAddress: :9997
+apiAllowOrigins: ["*"]
+
+metrics: true
+metricsAddress: :9998
+metricsAllowOrigins: ["*"]
+
+rtsp: true
+rtmp: true
+rtmpAddress: :1935
+srt: true
+srtAddress: :8890
+
+# --- HLS / LL-HLS -----------------------------------------------------------
+hls: true
+hlsAddress: :8888
+hlsAllowOrigins: ["*"]
+# Start the muxer as soon as a stream is published (not on first viewer) so the first
+# viewer does not pay the muxer warm-up cost: this is a startup-time optimization.
+hlsAlwaysRemux: true
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 500ms
+hlsMuxerCloseAfter: 60s
+
+# --- WebRTC (WHIP publish / WHEP play) --------------------------------------
+webrtc: true
+webrtcAddress: :8889
+webrtcAllowOrigins: ["*"]
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: false
+webrtcAdditionalHosts: ["127.0.0.1", "localhost"]
+webrtcICEServers2: []
+
+paths:
+  all_others:
