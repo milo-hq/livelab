@@ -228,7 +228,7 @@ export class RoomHub {
     if (r) return r;
     r = {
       conns: new Map(),
-      state: { slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0, ...this.initialState(room) },
+      state: { slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0, cohosts: [], ...this.initialState(room) },
       unsubscribe: this.bus.subscribe(room, (m) => this.onBusMessage(room, m)),
       msgTimes: [],
       onlineTimer: null,

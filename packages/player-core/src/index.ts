@@ -8,6 +8,7 @@ export { FlvEngine } from './engines/flv.js';
 export { NativeHlsEngine } from './engines/native-hls.js';
 export { WhepEngine } from './engines/whep.js';
 export { WhepClient, WhepError, type WhepClientOptions } from './engines/whep-client.js';
+export { WhipClient, type WhipClientOptions } from './engines/whip-client.js';
 export { createQoeProbe, type QoeEvent, type QoeProbe, type QoeProbeOptions, type EndReason } from './qoe-probe.js';
 export {
   createPlayerController,

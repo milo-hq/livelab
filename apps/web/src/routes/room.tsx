@@ -15,6 +15,8 @@ import { GiftPanel } from '../components/gifts/gift-panel';
 import { RechargeDialog, WalletBadge } from '../components/wallet/wallet';
 import { LoginDialog } from '../components/login-dialog';
 import { LivePlayer } from '../components/player/live-player';
+import { CohostControl, CohostPublisherSlot } from '../components/cohost/cohost-button';
+import { CohostLayer } from '../components/cohost/cohost-layer';
 
 function PollCard({ send }: { send: ReturnType<typeof useRoomConnection>['send'] }) {
   const poll = useRoomStore((s) => s.state.poll);
@@ -58,6 +60,8 @@ export default function RoomPage() {
           <LivePlayer roomId={id} muted={false}>
             <DanmakuLayer density={density} />
             <GiftLayer />
+            <CohostLayer />
+            <CohostPublisherSlot />
           </LivePlayer>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -70,6 +74,7 @@ export default function RoomPage() {
           </select>
           {user && <WalletBadge onRecharge={() => setRecharge(true)} />}
           <LikeButton send={send} />
+          <CohostControl roomId={id} onLogin={() => setLogin(true)} />
           {user?.role !== 'viewer' && user && <Link to={`/host/${id}`} className="text-xs text-sky-400">主播台 →</Link>}
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">

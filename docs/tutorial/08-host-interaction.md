@@ -35,16 +35,27 @@
 
 `pin` 从历史里按 `msgId` 找到消息放进 `state.pinned`；`announce` 写 `state.announce` 并广播 `system{announce}`（弹幕层用蓝色描边条显示）。两者都是"状态"，新进房的观众从 `welcome.state` 直接拿到。
 
-### 连麦（co-host）信令
+### 连麦（co-host）：信令走 IM，媒体走 WebRTC
 
-流程：观众请求 → 主播接受 → 服务端广播 `system{cohost, payload:{userId, path, state}}` → 观众浏览器 `getUserMedia` + WHIP 推到 `http://localhost:8889/cohost/<room>/<user>/whip` → 其他人用 `WhepEngine` 播这一路作画中画 → 结束清理。信令走同一条 WebSocket，媒体走 WebRTC。本项目实现了协议里的 `cohost` 系统消息与 WHIP/WHEP 两端引擎；完整的连麦 UI 是留给读者的扩展练习（`WhepClient` 反过来就是 WHIP 客户端）。
+```
+观众 POST /v1/rooms/:id/cohost/request ──▶ system{cohost, state:'requested'} ──▶ 主播台"连麦"面板
+主播 POST /cohost/accept {userId}      ──▶ 服务端分配 MediaMTX 路径 cohost/<room>/<user>
+                                          state{cohosts:[…]} + system{cohost, state:'accepted', whip, whep}
+观众浏览器 getUserMedia → WhipClient.publish(stream) → http://…:8889/cohost/<room>/<user>/whip
+其他所有人 CohostLayer：对 state.cohosts 里的每一路用 WhepEngine 播 …/whep，作画中画
+任一方 POST /cohost/end ──▶ state{cohosts} 移除 + system{cohost, state:'ended'} → 推流端 DELETE 资源、停摄像头
+```
+
+代码：`apps/api/src/modules/interaction/cohost.ts`（内存态请求/在麦列表，最多 3 人；访客只能结束自己）、`packages/player-core/src/engines/whip-client.ts`（RFC 9725 的 WHIP 客户端，与 WHEP 互为镜像：sendonly 轨道 → POST offer → 201 + Location → DELETE 挂断）、`apps/web/src/components/cohost/*`（观众按钮 + 推流预览、画中画层）、`apps/web/src/components/host/cohost-panel.tsx`（主播接受/拒绝/下麦）。
+
+两个设计点：**在麦名单放进 `RoomState.cohosts`**，迟到的观众从 `welcome` 就能拿到并渲染画中画；**推流地址由服务端分配**（路径含房间与用户 ID），生产上在 MediaMTX `authHTTPAddress` 回调里校验"该用户是否在麦"即可防止冒名推流。
 
 ## 动手实验
 
 1. 主播台发起投票，观众端投票，看票数实时变化与 60s 自动结束。
 2. 连送 5 个玫瑰再送 1 个火箭：火箭插队先播。
 3. 主播台"置顶其最新消息"，新开一个窗口进房，置顶条在 `welcome` 后立即出现。
-4. 用 OBS WHIP 推一路到 `live/demo`，体验浏览器外的"连麦上麦"。
+4. 连麦：观众窗口点"申请连麦"，主播台"连麦"面板点"接受"，观众允许摄像头后左下角出现本地预览，其他窗口右上角出现画中画；主播点"下麦"或观众点"挂断"结束。没有摄像头时可用 ffmpeg 模拟访客：`ffmpeg -re -f lavfi -i testsrc=size=640x360:rate=24 -f lavfi -i sine -c:v libx264 -tune zerolatency -c:a aac -f flv rtmp://localhost:1935/cohost/demo/<userId>`。
 
 ## 度量
 

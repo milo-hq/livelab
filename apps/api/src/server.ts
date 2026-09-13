@@ -10,6 +10,7 @@ import { roomRoutes } from './modules/rooms/routes.js';
 import { healthRoutes } from './modules/rooms/health.js';
 import { imRoutes } from './modules/im/ws.js';
 import { interactionRoutes } from './modules/interaction/routes.js';
+import { cohostRoutes } from './modules/interaction/cohost.js';
 import { adminRoutes } from './modules/admin/routes.js';
 import { walletRoutes } from './modules/wallet/routes.js';
 import { payMockRoutes } from './modules/pay-mock/routes.js';
@@ -47,6 +48,7 @@ export async function buildApp(opts: BuildOptions = {}) {
   await app.register(healthRoutes, ctx);
   await app.register(imRoutes, ctx);
   await app.register(interactionRoutes, ctx);
+  await app.register(cohostRoutes, ctx);
   await app.register(adminRoutes, ctx);
   await app.register(walletRoutes, ctx);
   await app.register(payMockRoutes, ctx);

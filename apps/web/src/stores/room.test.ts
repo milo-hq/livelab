@@ -8,7 +8,7 @@ describe('room store', () => {
   beforeEach(() => useRoomStore.getState().reset('r'));
 
   it('applies welcome state and history', () => {
-    useRoomStore.getState().applyFrame({ t: 'welcome', seq: 2, state: { online: 3, slowModeSec: 5, pinned: null, announce: 'hi', poll: null, likes: 9 }, history: [chat(1), chat(2)] });
+    useRoomStore.getState().applyFrame({ t: 'welcome', seq: 2, state: { online: 3, slowModeSec: 5, pinned: null, announce: 'hi', poll: null, likes: 9, cohosts: [] }, history: [chat(1), chat(2)] });
     const s = useRoomStore.getState();
     expect(s.state.online).toBe(3);
     expect(s.likeTotal).toBe(9);

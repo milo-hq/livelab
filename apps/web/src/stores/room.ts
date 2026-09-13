@@ -28,7 +28,7 @@ export interface RoomStore {
   clearError(): void;
 }
 
-export const emptyState: RoomState = { online: 0, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0 };
+export const emptyState: RoomState = { online: 0, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0, cohosts: [] };
 
 function appendMessages(list: ServerMsg[], incoming: ServerMsg[]): ServerMsg[] {
   if (incoming.length === 0) return list;

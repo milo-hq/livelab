@@ -58,7 +58,7 @@ describe('createImClient', () => {
     expect(ws1.url).toContain('room=demo');
     ws1.open();
     expect(JSON.parse(ws1.sent[0]!)).toEqual({ t: 'hello', room: 'demo' });
-    ws1.receive({ t: 'welcome', seq: 5, state: { online: 1, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0 }, history: [] });
+    ws1.receive({ t: 'welcome', seq: 5, state: { online: 1, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0, cohosts: [] }, history: [] });
     ws1.receive({ t: 'batch', msgs: [{ t: 'chat', lane: 'chat', seq: 7, room: 'demo', ts: 1, id: 'm', user, text: 'hi' }] });
     expect(frames).toHaveLength(2);
 

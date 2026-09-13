@@ -33,7 +33,7 @@ describe('RoomHub', () => {
     expect(w.seq).toBe(60);
     expect(w.history).toHaveLength(50);
     expect(w.history[0]!.seq).toBe(11);
-    expect(w.state).toEqual({ online: 1, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0 });
+    expect(w.state).toEqual({ online: 1, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0, cohosts: [] });
     await hub.close();
   });
 

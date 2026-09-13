@@ -8,6 +8,8 @@ import { StreamSetup } from '../components/host/stream-setup';
 import { HealthCard } from '../components/host/health-card';
 import { ModerationPanel, useModAction } from '../components/host/moderation-panel';
 import { PollPanel } from '../components/host/poll-panel';
+import { CohostPanel } from '../components/host/cohost-panel';
+import { CohostLayer } from '../components/cohost/cohost-layer';
 import { LoginDialog } from '../components/login-dialog';
 import { useRoomStore } from '../stores/room';
 import { LivePlayer } from '../components/player/live-player';
@@ -42,11 +44,12 @@ export default function HostPage() {
           <HealthCard roomId={id} />
         </div>
         <div className="aspect-video overflow-hidden rounded-lg bg-black">
-          <LivePlayer roomId={id} muted compact />
+          <LivePlayer roomId={id} muted compact><CohostLayer /></LivePlayer>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <ModerationPanel roomId={id} />
           <PollPanel roomId={id} />
+          <CohostPanel roomId={id} />
         </div>
       </div>
       <div className="flex h-[70vh] flex-col rounded-lg border border-zinc-800 bg-zinc-900 lg:h-auto">

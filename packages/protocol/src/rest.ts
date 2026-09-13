@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GiftAnimation, Role, UserRef, ChatMsg } from './im.js';
+import { GiftAnimation, Role, UserRef, ChatMsg, Cohost } from './im.js';
 
 export const Protocol = z.enum(['whep', 'llhls', 'hls', 'flv']);
 export type Protocol = z.infer<typeof Protocol>;
@@ -139,6 +139,12 @@ export const AdminOverview = z.object({
   qoe: QoeSummary,
 });
 export type AdminOverview = z.infer<typeof AdminOverview>;
+
+export const CohostRequest = z.object({ userId: z.string(), name: z.string(), at: z.number() });
+export type CohostRequest = z.infer<typeof CohostRequest>;
+export const CohostOverview = z.object({ requests: z.array(CohostRequest), active: z.array(Cohost), max: z.number().int() });
+export type CohostOverview = z.infer<typeof CohostOverview>;
+export const CohostTarget = z.object({ userId: z.string().optional() });
 
 export const ErrorBody = z.object({ code: z.string(), message: z.string() });
 

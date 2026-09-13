@@ -22,7 +22,7 @@ describe('interaction routes', () => {
   it('GET /v1/rooms/:id/state is public; /mod requires host|admin', async () => {
     const st = await t.app.inject({ method: 'GET', url: '/v1/rooms/demo/state' });
     expect(st.statusCode).toBe(200);
-    expect(st.json<RoomState>()).toEqual({ online: 0, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0 });
+    expect(st.json<RoomState>()).toEqual({ online: 0, slowModeSec: 0, pinned: null, announce: null, poll: null, likes: 0, cohosts: [] });
     expect((await t.app.inject({ method: 'GET', url: '/v1/rooms/nope/state' })).statusCode).toBe(404);
     expect((await mod('demo', { action: 'unpin' }, viewerToken)).statusCode).toBe(403);
     expect((await t.app.inject({ method: 'GET', url: '/v1/rooms/demo/mod' })).statusCode).toBe(401);

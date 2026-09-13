@@ -37,7 +37,7 @@ function Message({ m, onUser }: { m: ServerMsg; onUser?: (userId: string, name: 
       m.kind === 'poll' ? `投票开始：${String(m.payload['question'] ?? '')}` :
       m.kind === 'poll_end' ? '投票结束' :
       m.kind === 'pin' ? '主播置顶了一条消息' :
-      m.kind === 'cohost' ? `连麦：${String(m.payload['state'] ?? '')}` : null;
+      m.kind === 'cohost' ? ({ requested: `${String(m.payload['name'] ?? '')} 申请连麦`, accepted: `${String(m.payload['name'] ?? '')} 上麦了`, ended: `${String(m.payload['name'] ?? '')} 下麦了`, rejected: null, cancelled: null } as Record<string, string | null>)[String(m.payload['state'])] ?? null : null;
     if (!text) return null;
     return <div className="px-3 py-0.5 text-xs text-zinc-500">{text}</div>;
   }

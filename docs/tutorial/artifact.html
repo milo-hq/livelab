@@ -688,12 +688,18 @@ vote  { pollId, option }            error { code, message, retryAfterMs?, cid? }
 </ul>
 <h3 id="ch08-投票-interaction-routes-ts-poll-panel-tsx-直播间-pollcard">投票（<code>interaction/routes.ts</code> + <code>poll-panel.tsx</code> + 直播间 <code>PollCard</code>）</h3><p>主播 <code>POST /v1/rooms/:id/mod {action:&#39;poll_start&#39;, question, options, seconds}</code> → 服务端持有 <code>Poll</code>、广播 <code>system{poll}</code> + <code>state{poll}</code> → 观众 <code>vote{pollId, option}</code>（每人一票）→ <code>state{poll}</code> 增量更新票数 → 到时或手动 <code>poll_end</code>。</p>
 <h3 id="ch08-置顶与公告">置顶与公告</h3><p><code>pin</code> 从历史里按 <code>msgId</code> 找到消息放进 <code>state.pinned</code>；<code>announce</code> 写 <code>state.announce</code> 并广播 <code>system{announce}</code>（弹幕层用蓝色描边条显示）。两者都是&quot;状态&quot;，新进房的观众从 <code>welcome.state</code> 直接拿到。</p>
-<h3 id="ch08-连麦-co-host-信令">连麦（co-host）信令</h3><p>流程：观众请求 → 主播接受 → 服务端广播 <code>system{cohost, payload:{userId, path, state}}</code> → 观众浏览器 <code>getUserMedia</code> + WHIP 推到 <code>http://localhost:8889/cohost/&lt;room&gt;/&lt;user&gt;/whip</code> → 其他人用 <code>WhepEngine</code> 播这一路作画中画 → 结束清理。信令走同一条 WebSocket，媒体走 WebRTC。本项目实现了协议里的 <code>cohost</code> 系统消息与 WHIP/WHEP 两端引擎；完整的连麦 UI 是留给读者的扩展练习（<code>WhepClient</code> 反过来就是 WHIP 客户端）。</p>
+<h3 id="ch08-连麦-co-host-信令走-im-媒体走-webrtc">连麦（co-host）：信令走 IM，媒体走 WebRTC</h3><figure class="code" data-lang="diagram"><div class="code-bar"><span>diagram</span><button class="copy" type="button" data-copy>复制</button></div><pre><code class="hljs">观众 POST /v1/rooms/:id/cohost/request ──▶ system{cohost, state:'requested'} ──▶ 主播台&quot;连麦&quot;面板
+主播 POST /cohost/accept {userId}      ──▶ 服务端分配 MediaMTX 路径 cohost/&lt;room&gt;/&lt;user&gt;
+                                          state{cohosts:[…]} + system{cohost, state:'accepted', whip, whep}
+观众浏览器 getUserMedia → WhipClient.publish(stream) → http://…:8889/cohost/&lt;room&gt;/&lt;user&gt;/whip
+其他所有人 CohostLayer：对 state.cohosts 里的每一路用 WhepEngine 播 …/whep，作画中画
+任一方 POST /cohost/end ──▶ state{cohosts} 移除 + system{cohost, state:'ended'} → 推流端 DELETE 资源、停摄像头</code></pre></figure><p>代码：<code>apps/api/src/modules/interaction/cohost.ts</code>（内存态请求/在麦列表，最多 3 人；访客只能结束自己）、<code>packages/player-core/src/engines/whip-client.ts</code>（RFC 9725 的 WHIP 客户端，与 WHEP 互为镜像：sendonly 轨道 → POST offer → 201 + Location → DELETE 挂断）、<code>apps/web/src/components/cohost/*</code>（观众按钮 + 推流预览、画中画层）、<code>apps/web/src/components/host/cohost-panel.tsx</code>（主播接受/拒绝/下麦）。</p>
+<p>两个设计点：<strong>在麦名单放进 <code>RoomState.cohosts</code></strong>，迟到的观众从 <code>welcome</code> 就能拿到并渲染画中画；<strong>推流地址由服务端分配</strong>（路径含房间与用户 ID），生产上在 MediaMTX <code>authHTTPAddress</code> 回调里校验&quot;该用户是否在麦&quot;即可防止冒名推流。</p>
 <h2 id="ch08-动手实验">动手实验</h2><ol>
 <li>主播台发起投票，观众端投票，看票数实时变化与 60s 自动结束。</li>
 <li>连送 5 个玫瑰再送 1 个火箭：火箭插队先播。</li>
 <li>主播台&quot;置顶其最新消息&quot;，新开一个窗口进房，置顶条在 <code>welcome</code> 后立即出现。</li>
-<li>用 OBS WHIP 推一路到 <code>live/demo</code>，体验浏览器外的&quot;连麦上麦&quot;。</li>
+<li>连麦：观众窗口点&quot;申请连麦&quot;，主播台&quot;连麦&quot;面板点&quot;接受&quot;，观众允许摄像头后左下角出现本地预览，其他窗口右上角出现画中画；主播点&quot;下麦&quot;或观众点&quot;挂断&quot;结束。没有摄像头时可用 ffmpeg 模拟访客：<code>ffmpeg -re -f lavfi -i testsrc=size=640x360:rate=24 -f lavfi -i sine -c:v libx264 -tune zerolatency -c:a aac -f flv rtmp://localhost:1935/cohost/demo/&lt;userId&gt;</code>。</li>
 </ol>
 <h2 id="ch08-度量">度量</h2><p>礼物：<code>gift_orders</code> 表即流水；互动率 = 有互动的 view ÷ 总 view（可从 IM 侧埋点）。</p>
 <h2 id="ch08-生产注意事项">生产注意事项</h2><ul>

@@ -92,6 +92,17 @@ export const Poll = z.object({
 });
 export type Poll = z.infer<typeof Poll>;
 
+/** A viewer currently on air. `path` is the MediaMTX path the guest publishes to (WHIP) and everyone else plays (WHEP). */
+export const Cohost = z.object({
+  userId: z.string(),
+  name: z.string(),
+  path: z.string(),
+  whip: z.string(),
+  whep: z.string(),
+  since: z.number(),
+});
+export type Cohost = z.infer<typeof Cohost>;
+
 export const RoomState = z.object({
   online: z.number().int(),
   slowModeSec: z.number().int(),
@@ -99,6 +110,7 @@ export const RoomState = z.object({
   announce: z.string().nullable(),
   poll: Poll.nullable(),
   likes: z.number().int(),
+  cohosts: z.array(Cohost).default([]),
 });
 export type RoomState = z.infer<typeof RoomState>;
 

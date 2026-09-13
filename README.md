@@ -1,6 +1,6 @@
 # LiveLab · 直播 / 视频播放前端全链路实践
 
-一个可在笔记本上一键跑通、与线上架构同构的直播平台教学项目，覆盖：直播间播放（LL-HLS / HTTP-FLV / WebRTC）、弹幕与 IM、主播互动、虚拟币付费、运营工具、起播/卡顿/弱网/跨境优化，以及播放质量监控（ClickHouse + Grafana）。
+一个可在笔记本上一键跑通、与线上架构同构的直播平台教学项目，覆盖：直播间播放（LL-HLS / HTTP-FLV / WebRTC）、弹幕与 IM、主播互动（点赞/礼物/投票/置顶/连麦）、虚拟币付费、运营工具、起播/卡顿/弱网/跨境优化，以及播放质量监控（ClickHouse + Grafana）。
 
 技术选型于 2026-09-13 逐项核实版本（详见 `docs/research/`）：React 19.3 · Vite 8.3 · TypeScript 5.9.3 · Tailwind 4.3 · hls.js 1.7.3 · mpegts.js 1.8.2 · media-chrome 4.19 · Fastify 5.12 · Node `node:sqlite` · MediaMTX 1.21.0 · SRS 6 · ClickHouse 26.8 · Grafana 13.2。
 
