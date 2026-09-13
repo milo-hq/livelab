@@ -7,6 +7,11 @@ import authPlugin from './plugins/auth.js';
 import { HttpError } from './lib/http-error.js';
 import { createContext, type AppContext } from './context.js';
 import { roomRoutes } from './modules/rooms/routes.js';
+import { walletRoutes } from './modules/wallet/routes.js';
+import { payMockRoutes } from './modules/pay-mock/routes.js';
+import { giftRoutes } from './modules/gifts/routes.js';
+import { telemetryRoutes } from './modules/telemetry/routes.js';
+import { weaknetRoutes } from './modules/weaknet/routes.js';
 
 export interface BuildOptions { cfg?: Partial<Config>; dbPath?: string; logger?: boolean }
 
@@ -35,7 +40,13 @@ export async function buildApp(opts: BuildOptions = {}) {
 
   app.get('/healthz', async () => ({ ok: true, ts: Date.now() }));
   await app.register(roomRoutes, ctx);
+  await app.register(walletRoutes, ctx);
+  await app.register(payMockRoutes, ctx);
+  await app.register(giftRoutes, ctx);
+  await app.register(telemetryRoutes, ctx);
+  await app.register(weaknetRoutes, ctx);
 
+  app.addHook('onClose', async () => ctx.telemetry.close());
   app.addHook('onClose', async () => db.close());
   return app;
 }
