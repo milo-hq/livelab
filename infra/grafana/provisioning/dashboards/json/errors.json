@@ -1,0 +1,342 @@
+{
+  "uid": "livelab-errors",
+  "title": "LiveLab · 错误与异常分析",
+  "tags": [
+    "livelab",
+    "errors"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "room",
+        "label": "房间",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT room_id FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT room_id FROM qoe.events"
+      },
+      {
+        "name": "cdn",
+        "label": "CDN",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT cdn FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT cdn FROM qoe.events"
+      },
+      {
+        "name": "protocol",
+        "label": "协议",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT protocol FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT protocol FROM qoe.events"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "错误数 按 err_type",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, err_type, count() AS n FROM qoe.events WHERE event='error' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time, err_type ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "致命错误会话数",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, uniq(view_id) AS fatal_views FROM qoe.events WHERE event='error' AND fatal=1 AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "err_detail 分布",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT err_type, err_detail, protocol, cdn, count() AS n, uniq(view_id) AS views FROM qoe.events WHERE event='error' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY err_type, err_detail, protocol, cdn ORDER BY n DESC LIMIT 50",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "最近致命会话（含播放器日志尾部）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT ts, view_id, protocol, cdn, err_type, err_detail, substring(attrs['log'], 1, 400) AS log_tail FROM qoe.events WHERE event='error' AND fatal=1 AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) ORDER BY ts DESC LIMIT 30",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "用户报障（report_issue）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT ts, view_id, room_id, attrs['description'] AS description, substring(attrs['resources'], 1, 300) AS resources FROM qoe.events WHERE event='report_issue' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) ORDER BY ts DESC LIMIT 30",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "QoE 总览",
+      "type": "link",
+      "url": "/d/livelab-qoe-overview"
+    },
+    {
+      "title": "按 CDN/协议",
+      "type": "link",
+      "url": "/d/livelab-qoe-dims"
+    },
+    {
+      "title": "错误分析",
+      "type": "link",
+      "url": "/d/livelab-errors"
+    }
+  ]
+}

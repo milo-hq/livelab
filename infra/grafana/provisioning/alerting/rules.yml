@@ -1,0 +1,66 @@
+# Grafana unified alerting — file provisioning.
+# Starter SLO set from docs/research/04-qoe-observability.md. Each rule: ClickHouse query (A) → threshold (C).
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: livelab-qoe
+    folder: LiveLab
+    interval: 1m
+    rules:
+      - uid: livelab-ttff-p95
+        title: 起播 p95 > 3s
+        condition: C
+        for: 10m
+        labels: { severity: warning, team: player }
+        annotations: { summary: "TTFF p95 超过 3000ms 持续 10 分钟（按 CDN 分组）" }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: clickhouse-qoe
+            model:
+              refId: A
+              queryType: sql
+              editorType: sql
+              format: 1
+              rawSql: "SELECT cdn, quantile(0.95)(value_ms) AS p95 FROM qoe.events WHERE event='first_frame' AND ts >= now() - INTERVAL 10 MINUTE GROUP BY cdn"
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: A, conditions: [{ evaluator: { type: gt, params: [3000] } }] }
+      - uid: livelab-stall
+        title: 百秒卡顿时长 > 3
+        condition: C
+        for: 5m
+        labels: { severity: critical, team: player }
+        annotations: { summary: "卡顿率超过 3% 持续 5 分钟" }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: clickhouse-qoe
+            model:
+              refId: A
+              queryType: sql
+              editorType: sql
+              format: 1
+              rawSql: "SELECT 100*sumIf(value_ms, event='stall_end')/greatest(sumIf(value_ms, event='heartbeat'),1) AS stall_per_100s FROM qoe.events WHERE ts >= now() - INTERVAL 5 MINUTE"
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: A, conditions: [{ evaluator: { type: gt, params: [3] } }] }
+      - uid: livelab-failure
+        title: 播放失败率 > 1%
+        condition: C
+        for: 5m
+        labels: { severity: critical, team: player }
+        annotations: { summary: "致命错误会话占比超过 1% 持续 5 分钟" }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: clickhouse-qoe
+            model:
+              refId: A
+              queryType: sql
+              editorType: sql
+              format: 1
+              rawSql: "SELECT 100*uniqIf(view_id, event='error' AND fatal=1)/greatest(uniqIf(view_id, event='play_attempt'),1) AS failure_pct FROM qoe.events WHERE ts >= now() - INTERVAL 5 MINUTE"
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: A, conditions: [{ evaluator: { type: gt, params: [1] } }] }

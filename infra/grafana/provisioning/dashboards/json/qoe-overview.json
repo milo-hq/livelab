@@ -1,0 +1,791 @@
+{
+  "uid": "livelab-qoe-overview",
+  "title": "LiveLab · QoE 总览",
+  "tags": [
+    "livelab",
+    "qoe"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "room",
+        "label": "房间",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT room_id FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT room_id FROM qoe.events"
+      },
+      {
+        "name": "cdn",
+        "label": "CDN",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT cdn FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT cdn FROM qoe.events"
+      },
+      {
+        "name": "protocol",
+        "label": "协议",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT protocol FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT protocol FROM qoe.events"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "播放会话数",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT uniqIf(view_id, event='play_attempt') AS sessions FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote})",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "uniq(view_id) with a play_attempt in range"
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "起播 TTFF p50 / p95",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT quantile(0.5)(value_ms) AS p50, quantile(0.95)(value_ms) AS p95 FROM qoe.events WHERE event='first_frame' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote})",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 3000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "first_frame.value_ms = 点击/自动播放 → 首帧"
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "秒开率",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT 100*countIf(value_ms<=1000)/greatest(count(),1) AS fast_start_pct FROM qoe.events WHERE event='first_frame' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote})",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 9,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "TTFF ≤ 1000ms 的占比（阿里云口径）"
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "百秒卡顿时长",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT 100*sumIf(value_ms, event='stall_end')/greatest(sumIf(value_ms, event='heartbeat'),1) AS stall_per_100s FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote})",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "Σ卡顿ms / Σ观看ms × 100（heartbeat.value_ms = playingMs）"
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "卡顿会话占比",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT 100*uniqIf(view_id, event='stall_end')/greatest(uniqIf(view_id, event='play_attempt'),1) AS stall_view_pct FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote})",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "播放失败率 / EBVS",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "WITH v AS (SELECT view_id, maxIf(1, event='first_frame') ff, maxIf(1, event='error' AND fatal=1) fe, maxIf(1, event='end' AND value_ms>=1000) ex FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY view_id)\nSELECT 100*avg(fe) AS failure_pct, 100*avg(ff=0 AND fe=0 AND ex=1) AS ebvs_pct FROM v",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "Mux 口径：致命错误会话占比；EBVS = 未起播且停留≥1s 即退出"
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "起播 TTFF p50 / p95（ms）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, quantile(0.5)(value_ms) AS p50, quantile(0.95)(value_ms) AS p95 FROM qoe.events WHERE event='first_frame' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "百秒卡顿时长",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, 100*sumIf(value_ms, event='stall_end')/greatest(sumIf(value_ms, event='heartbeat'),1) AS stall_per_100s FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "端到边缘延迟 p50 按协议（ms）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, protocol, quantile(0.5)(latency_ms) AS p50 FROM qoe.events WHERE event='latency_sample' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time, protocol ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "码率 p50 与掉帧率",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, quantile(0.5)(bitrate_kbps) AS bitrate_kbps, 100*sum(dropped_frames)/greatest(sum(total_frames),1) AS dropped_pct FROM qoe.events WHERE event='heartbeat' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Top 错误（err_type / err_detail）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT err_type, err_detail, countIf(fatal=1) AS fatal, count() AS total, uniq(view_id) AS views FROM qoe.events WHERE event='error' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY err_type, err_detail ORDER BY total DESC LIMIT 20",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "恢复动作分布（recovery_action）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT attrs['action'] AS action, attrs['from'] AS from_pathway, attrs['to'] AS to_pathway, count() AS n FROM qoe.events WHERE event='recovery_action' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY action, from_pathway, to_pathway ORDER BY n DESC LIMIT 20",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "QoE 总览",
+      "type": "link",
+      "url": "/d/livelab-qoe-overview"
+    },
+    {
+      "title": "按 CDN/协议",
+      "type": "link",
+      "url": "/d/livelab-qoe-dims"
+    },
+    {
+      "title": "错误分析",
+      "type": "link",
+      "url": "/d/livelab-errors"
+    }
+  ]
+}

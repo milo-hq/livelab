@@ -1,0 +1,397 @@
+{
+  "uid": "livelab-qoe-dims",
+  "title": "LiveLab · 按 CDN / 协议 / 网络",
+  "tags": [
+    "livelab",
+    "qoe"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "room",
+        "label": "房间",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT room_id FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT room_id FROM qoe.events"
+      },
+      {
+        "name": "cdn",
+        "label": "CDN",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT cdn FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT cdn FROM qoe.events"
+      },
+      {
+        "name": "protocol",
+        "label": "协议",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse-qoe"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "query": "SELECT DISTINCT protocol FROM qoe.events WHERE ts >= now() - INTERVAL 1 DAY",
+        "definition": "SELECT DISTINCT protocol FROM qoe.events"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "barchart",
+      "title": "TTFF p95 按 CDN",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT cdn, quantile(0.95)(value_ms) AS p95_ms FROM qoe.events WHERE event='first_frame' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY cdn ORDER BY cdn",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "auto",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "barchart",
+      "title": "TTFF p95 按协议",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT protocol, quantile(0.95)(value_ms) AS p95_ms FROM qoe.events WHERE event='first_frame' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY protocol ORDER BY protocol",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "auto",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "barchart",
+      "title": "百秒卡顿时长 按 CDN×协议",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT concat(cdn, ' / ', protocol) AS dim, 100*sumIf(value_ms, event='stall_end')/greatest(sumIf(value_ms, event='heartbeat'),1) AS stall_per_100s FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY dim ORDER BY dim",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "auto",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "TTFF p95 按 CDN（时间序列）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, cdn, quantile(0.95)(value_ms) AS p95 FROM qoe.events WHERE event='first_frame' AND $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time, cdn ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "百秒卡顿时长 按协议（时间序列）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT $__timeInterval(ts) AS time, protocol, 100*sumIf(value_ms, event='stall_end')/greatest(sumIf(value_ms, event='heartbeat'),1) AS stall_per_100s FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY time, protocol ORDER BY time",
+          "format": 2,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "维度汇总（浏览器 × 网络类型）",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-qoe"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-qoe"
+          },
+          "editorType": "sql",
+          "queryType": "sql",
+          "rawSql": "SELECT browser, net_type, uniqIf(view_id, event='play_attempt') AS sessions, quantile(0.5)(if(event='first_frame', value_ms, NULL)) AS ttff_p50, 100*sumIf(value_ms, event='stall_end')/greatest(sumIf(value_ms, event='heartbeat'),1) AS stall_per_100s FROM qoe.events WHERE $__timeFilter(ts) AND room_id IN (${room:singlequote}) AND cdn IN (${cdn:singlequote}) AND protocol IN (${protocol:singlequote}) GROUP BY browser, net_type ORDER BY sessions DESC LIMIT 50",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "QoE 总览",
+      "type": "link",
+      "url": "/d/livelab-qoe-overview"
+    },
+    {
+      "title": "按 CDN/协议",
+      "type": "link",
+      "url": "/d/livelab-qoe-dims"
+    },
+    {
+      "title": "错误分析",
+      "type": "link",
+      "url": "/d/livelab-errors"
+    }
+  ]
+}
