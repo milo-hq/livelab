@@ -5,7 +5,7 @@ import type { QoeSummary, ServerMsg } from '@livelab/protocol';
 import { createHealthService, type HealthService } from './modules/rooms/health.js';
 import { createMemoryBus, createRedisBus, type Bus } from './modules/im/bus.js';
 import { createMemoryHistory, createRedisHistory, type History } from './modules/im/history.js';
-import { RoomHub } from './modules/im/hub.js';
+import { RoomHub, type MsgInput } from './modules/im/hub.js';
 import { Moderation } from './modules/im/moderation.js';
 import { WalletService } from './modules/wallet/service.js';
 import { createTelemetrySink, type Sink } from './modules/telemetry/sink.js';
@@ -34,7 +34,7 @@ export interface AppContext {
   /** 15-minute QoE summary from ClickHouse; undefined when ClickHouse is not configured. */
   qoeSummary?: () => Promise<QoeSummary>;
   /** Room broadcast hook used by REST modules (gifts) to push into the IM lanes. */
-  broadcast?: (room: string, msg: Omit<ServerMsg, 'seq' | 'ts'>) => Promise<ServerMsg | null>;
+  broadcast?: (room: string, msg: MsgInput) => Promise<ServerMsg | null>;
 }
 
 export interface ContextLogger { info: (msg: string) => void; warn: (msg: string) => void }

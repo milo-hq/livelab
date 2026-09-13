@@ -96,9 +96,9 @@ describe('POST /v1/gifts', () => {
     await vi.waitFor(() => expect(broadcast).toHaveBeenCalledTimes(2));
   });
 
-  it('works without a broadcast hook wired (hub not yet merged)', async () => {
+  it('works without a broadcast hook wired (e.g. a REST-only deployment)', async () => {
     await fund(viewer.id, 5);
-    expect(app.ctx.broadcast).toBeUndefined();
+    app.ctx.broadcast = undefined;
     const res = await send({ roomId: 'demo', giftId: 'rose', count: 5 }, 'k');
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ok: true, balance: 0 });
