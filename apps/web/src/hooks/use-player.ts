@@ -119,22 +119,40 @@ export function usePlayer(opts: UsePlayerOptions) {
       if (cur) setStats(cur.engine.getStats());
     }, 1000);
 
-    // Autoplay policy: try with sound (the user usually got here by clicking a room card); if the
-    // browser refuses, fall back to muted playback and let the mute button in the chrome unmute.
+    // Autoplay: engines attach a MediaSource/srcObject *after* start() begins, and a play() issued
+    // before that is rejected with "interrupted by a new load request". So playback is triggered from
+    // the media element's own `canplay`, and only while "armed" — armed at start and after every
+    // pathway switch, disarmed by the first `playing` — so a user's manual pause is never overridden.
+    // If the browser refuses sound (no user gesture yet), fall back to muted and show a hint.
+    let armed = true;
     const tryPlay = async () => {
       try {
         await video.play();
-      } catch {
+      } catch (e) {
+        if ((e as DOMException)?.name === 'AbortError') return; // interrupted by a load; canplay will retry
         video.muted = true;
         setAutoMuted(true);
         video.play().catch(() => {});
       }
     };
-    controller.start().then(tryPlay).catch(() => {
+    const onCanPlay = () => { if (armed && video.paused) void tryPlay(); };
+    const onPlaying = () => { armed = false; };
+    // Chrome pauses muted media in hidden tabs; remember that it was the browser (not the user) and
+    // resume when the tab is visible again — what viewers expect from a live room.
+    let pausedByHiddenTab = false;
+    const onPause = () => { if (document.visibilityState === 'hidden') pausedByHiddenTab = true; };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && pausedByHiddenTab && video.paused) { pausedByHiddenTab = false; void tryPlay(); }
+    };
+    video.addEventListener('canplay', onCanPlay);
+    video.addEventListener('playing', onPlaying);
+    video.addEventListener('pause', onPause);
+    document.addEventListener('visibilitychange', onVisible);
+    controller.start().catch(() => {
       setState('error');
       setErrorText((t) => t ?? 'all pathways failed');
     });
-    const offPathPlay = controller.on('pathway_change', () => { void tryPlay(); });
+    const offPathPlay = controller.on('pathway_change', () => { armed = true; });
 
     const onHide = () => { if (document.visibilityState === 'hidden') telemetry.flush(); };
     document.addEventListener('visibilitychange', onHide);
@@ -144,6 +162,10 @@ export function usePlayer(opts: UsePlayerOptions) {
       offQoe();
       offPath();
       offPathPlay();
+      video.removeEventListener('canplay', onCanPlay);
+      video.removeEventListener('playing', onPlaying);
+      video.removeEventListener('pause', onPause);
+      document.removeEventListener('visibilitychange', onVisible);
       clearInterval(statsTimer);
       controller.probe.end('user');
       controller.stop();

@@ -42,7 +42,9 @@ export function LivePlayer({ roomId, muted = true, forceProtocol, weaknet, runKe
   return (
     <div className="relative h-full w-full bg-black">
     <MediaController defaultStreamType="live" className="relative block h-full w-full bg-black" style={{ aspectRatio: 'auto' }}>
-      <video ref={p.videoRef} slot="media" playsInline muted={muted} autoPlay preload="metadata" className="h-full w-full object-contain" />
+      {/* No `autoplay` attribute on purpose: Chrome pauses attribute-autoplayed muted videos in hidden tabs,
+          while script-initiated play() keeps running. use-player calls play() on `canplay`. */}
+      <video ref={p.videoRef} slot="media" playsInline muted={muted} preload="metadata" className="h-full w-full object-contain" />
       <div slot="top-chrome" className="flex w-full items-start justify-between p-2">
         <div className="flex items-center gap-2">
           <span className="rounded bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-white">LIVE</span>
