@@ -40,10 +40,9 @@ export function LivePlayer({ roomId, muted = true, forceProtocol, weaknet, runKe
   const latency = p.stats?.latencyMs;
 
   return (
+    <div className="relative h-full w-full bg-black">
     <MediaController defaultStreamType="live" className="relative block h-full w-full bg-black" style={{ aspectRatio: 'auto' }}>
       <video ref={p.videoRef} slot="media" playsInline muted={muted} autoPlay preload="metadata" className="h-full w-full object-contain" />
-      {/* overlays live in the default slot so media-chrome stacks them above the media */}
-      <div slot="centered-chrome" className="pointer-events-none absolute inset-0">{children}</div>
       <div slot="top-chrome" className="flex w-full items-start justify-between p-2">
         <div className="flex items-center gap-2">
           <span className="rounded bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-white">LIVE</span>
@@ -82,5 +81,9 @@ export function LivePlayer({ roomId, muted = true, forceProtocol, weaknet, runKe
         <MediaFullscreenButton />
       </MediaControlBar>
     </MediaController>
+    {/* Overlays (danmaku / gift canvases) sit above the whole player but never intercept input;
+        they stop 44px short of the bottom so the control bar stays readable. */}
+    {children && <div className="pointer-events-none absolute inset-x-0 top-0 bottom-11 overflow-hidden">{children}</div>}
+    </div>
   );
 }

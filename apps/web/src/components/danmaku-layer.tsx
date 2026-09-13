@@ -24,7 +24,8 @@ export function DanmakuLayer({ density = 'normal' }: { density?: DanmakuDensity 
     const canvas = canvasRef.current!;
     const handle = createDanmaku(canvas, { ...DENSITY[density], durationMs: 8000, laneHeight: 34 });
     handleRef.current = handle;
-    let lastSeq = 0;
+    // Start from the newest seq already in the store: a (re)mounted overlay must not replay history.
+    let lastSeq = useRoomStore.getState().messages.at(-1)?.seq ?? 0;
     const unsub = useRoomStore.subscribe((s) => {
       // Only messages newer than the last one we emitted (the store keeps a rolling window).
       for (const m of s.messages) {
