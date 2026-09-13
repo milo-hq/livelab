@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { UtcClock } from './utc-clock';
 import type { Protocol } from '@livelab/protocol';
 import {
   MediaController, MediaControlBar, MediaPlayButton, MediaMuteButton, MediaVolumeRange,
@@ -49,6 +50,7 @@ export function LivePlayer({ roomId, muted = true, forceProtocol, weaknet, runKe
           {p.pathway && <span className="rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-zinc-200">{p.pathway.protocol.toUpperCase()} · {p.pathway.cdn}</span>}
           {latency != null && !Number.isNaN(latency) && <span className="rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-zinc-200">延迟 {(latency / 1000).toFixed(1)}s</span>}
           {p.state === 'stalled' && <span className="rounded bg-amber-600 px-1.5 py-0.5 text-[11px]">缓冲中</span>}
+          {!compact && <UtcClock />}
         </div>
         {!compact && (
           <div className="flex items-center gap-1">

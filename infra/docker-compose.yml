@@ -27,7 +27,6 @@ services:
     entrypoint: ["/bin/sh", "/push.sh"]
     environment:
       TARGET: rtmp://mediamtx:1935/live
-      TZ: ${TZ:-Asia/Shanghai}   # burned-in clock should match the viewer's wall clock
     volumes:
       - ./pusher/push.sh:/push.sh:ro
       - ./pusher/filter.txt:/filter.txt:ro
@@ -98,7 +97,6 @@ services:
     entrypoint: ["/bin/sh", "/push.sh"]
     environment:
       TARGET: rtmp://srs:1935/live
-      TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - ./pusher/push.sh:/push.sh:ro
       - ./pusher/filter.txt:/filter.txt:ro
