@@ -49,6 +49,7 @@ export function LivePlayer({ roomId, muted = true, forceProtocol, weaknet, runKe
           {p.pathway && <span className="rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-zinc-200">{p.pathway.protocol.toUpperCase()} · {p.pathway.cdn}</span>}
           {latency != null && !Number.isNaN(latency) && <span className="rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-zinc-200">延迟 {(latency / 1000).toFixed(1)}s</span>}
           {p.state === 'stalled' && <span className="rounded bg-amber-600 px-1.5 py-0.5 text-[11px]">缓冲中</span>}
+          {p.autoMuted && <span className="rounded bg-zinc-700 px-1.5 py-0.5 text-[11px]">已静音起播 · 点击喇叭开声</span>}
           {!compact && <UtcClock />}
         </div>
         {!compact && (

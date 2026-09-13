@@ -58,6 +58,7 @@ export function usePlayer(opts: UsePlayerOptions) {
   const [events, setEvents] = useState<PlayerEventRow[]>([]);
   const [ttffMs, setTtff] = useState<number | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [autoMuted, setAutoMuted] = useState(false);
   const viewIdRef = useRef<string>('');
 
   const play = useQuery({ queryKey: ['play', roomId], queryFn: () => api.get(`/v1/rooms/${roomId}/play`, PlayResponse), staleTime: 60_000 });
@@ -118,10 +119,22 @@ export function usePlayer(opts: UsePlayerOptions) {
       if (cur) setStats(cur.engine.getStats());
     }, 1000);
 
-    controller.start().catch(() => {
+    // Autoplay policy: try with sound (the user usually got here by clicking a room card); if the
+    // browser refuses, fall back to muted playback and let the mute button in the chrome unmute.
+    const tryPlay = async () => {
+      try {
+        await video.play();
+      } catch {
+        video.muted = true;
+        setAutoMuted(true);
+        video.play().catch(() => {});
+      }
+    };
+    controller.start().then(tryPlay).catch(() => {
       setState('error');
       setErrorText((t) => t ?? 'all pathways failed');
     });
+    const offPathPlay = controller.on('pathway_change', () => { void tryPlay(); });
 
     const onHide = () => { if (document.visibilityState === 'hidden') telemetry.flush(); };
     document.addEventListener('visibilitychange', onHide);
@@ -130,6 +143,7 @@ export function usePlayer(opts: UsePlayerOptions) {
       document.removeEventListener('visibilitychange', onHide);
       offQoe();
       offPath();
+      offPathPlay();
       clearInterval(statsTimer);
       controller.probe.end('user');
       controller.stop();
@@ -144,5 +158,5 @@ export function usePlayer(opts: UsePlayerOptions) {
   const switchPathway = useCallback((i: number) => controllerRef.current?.switchPathway(i), []);
   const reportIssue = useCallback((description: string) => telemetry.reportIssue(description, { roomId, viewId: viewIdRef.current, pathway: pathway ? describePathway(pathway) : '' }), [roomId, pathway]);
 
-  return { videoRef, state, pathway, engineKind, stats, events, ttffMs, errorText, playData: play.data, playError: play.error as Error | null, switchPathway, reportIssue };
+  return { videoRef, state, pathway, engineKind, stats, events, ttffMs, errorText, autoMuted, playData: play.data, playError: play.error as Error | null, switchPathway, reportIssue };
 }
