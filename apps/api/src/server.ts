@@ -7,6 +7,10 @@ import authPlugin from './plugins/auth.js';
 import { HttpError } from './lib/http-error.js';
 import { createContext, type AppContext } from './context.js';
 import { roomRoutes } from './modules/rooms/routes.js';
+import { healthRoutes } from './modules/rooms/health.js';
+import { imRoutes } from './modules/im/ws.js';
+import { interactionRoutes } from './modules/interaction/routes.js';
+import { adminRoutes } from './modules/admin/routes.js';
 
 export interface BuildOptions { cfg?: Partial<Config>; dbPath?: string; logger?: boolean }
 
@@ -30,11 +34,18 @@ export async function buildApp(opts: BuildOptions = {}) {
     return reply.status(status).send({ code: status >= 500 ? 'internal' : 'bad_request', message: e.message ?? 'error' });
   });
 
-  const ctx: AppContext = createContext(cfg, db);
+  const ctx: AppContext = await createContext(cfg, db, app.log);
   app.decorate('ctx', ctx);
 
   app.get('/healthz', async () => ({ ok: true, ts: Date.now() }));
   await app.register(roomRoutes, ctx);
+  await app.register(healthRoutes, ctx);
+  await app.register(imRoutes, ctx);
+  await app.register(interactionRoutes, ctx);
+  await app.register(adminRoutes, ctx);
+  // Prime the MediaMTX health cache so the first room list already reflects liveness (non-blocking).
+  for (const r of ctx.rooms.list()) void ctx.health.get(r.streamPath);
+  app.addHook('onClose', async () => { await ctx.hub.close(); await ctx.bus.close(); ctx.health.close(); });
 
   app.addHook('onClose', async () => db.close());
   return app;
