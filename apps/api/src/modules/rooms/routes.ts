@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { AuthRequest, type Room } from '@livelab/protocol';
 import { HttpError, parse } from '../../lib/http-error.js';
 import { userIdFor } from '../../lib/ids.js';
-import { buildMasterPlaylist, buildPathways, DEMO_RENDITIONS, policyFor } from './pathways.js';
+import { buildMasterPlaylist, buildPathways, DEMO_RENDITIONS, policyFor, resolveRendition } from './pathways.js';
 import type { AppContext } from '../../context.js';
 
 export async function roomRoutes(app: FastifyInstance, ctx: AppContext) {
@@ -34,8 +34,14 @@ export async function roomRoutes(app: FastifyInstance, ctx: AppContext) {
   app.get<{ Params: { id: string } }>('/v1/rooms/:id/master.m3u8', async (req, reply) => {
     const room = rooms.get(req.params.id);
     if (!room) throw new HttpError(404, 'not_found', 'room not found');
+    let resolved;
+    try {
+      resolved = await Promise.all(DEMO_RENDITIONS.map((r) => resolveRendition(cfg.mediamtxHls, r)));
+    } catch (e) {
+      throw new HttpError(503, 'stream_unavailable', (e as Error).message);
+    }
     reply.header('content-type', 'application/vnd.apple.mpegurl').header('cache-control', 'no-store');
-    return buildMasterPlaylist(cfg.mediamtxHls, DEMO_RENDITIONS);
+    return buildMasterPlaylist(resolved);
   });
 
   app.get<{ Params: { id: string } }>('/v1/rooms/:id/key', { preHandler: app.requireRole('host', 'admin') }, async (req) => {

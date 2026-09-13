@@ -27,20 +27,52 @@ export function policyFor(room: Pick<Room, 'mode'>): PlayPolicy {
 }
 
 export interface Rendition { path: string; bandwidth: number; width: number; height: number; codecs: string }
+export interface ResolvedRendition extends Rendition { videoUrl: string; audioUrl: string | null }
 
 /**
- * Multivariant playlist that references MediaMTX media playlists of two separately published
- * renditions. MediaMTX names its media playlists `video1_stream.m3u8` / `audio2_stream.m3u8`
- * (verified against 1.21.0). A single audio group is shared so level switches only change video.
+ * MediaMTX (≥1.13) scopes every HLS viewer to a *session*: the multivariant playlist it serves
+ * embeds `?session=<uuid>` into the media-playlist URIs (a cookie is used on HTTPS instead), and
+ * media playlists / segments without a valid session get 401. So to stitch two MediaMTX
+ * renditions into one ABR master we must first ask MediaMTX for each rendition's multivariant
+ * playlist and reuse the session-scoped URIs it hands back — exactly what a real "playlist
+ * stitching" origin does in front of a packager.
  */
-export function buildMasterPlaylist(hlsBase: string, renditions: Rendition[]): string {
+export async function resolveRendition(hlsBase: string, r: Rendition, fetchImpl: typeof fetch = fetch): Promise<ResolvedRendition> {
+  const indexUrl = `${hlsBase}/live/${r.path}/index.m3u8?cookieCheck=1`;
+  const res = await fetchImpl(indexUrl, { headers: { origin: 'livelab-api' } });
+  if (!res.ok) throw new Error(`rendition ${r.path} unavailable (${res.status})`);
+  const text = await res.text();
+  let audioUrl: string | null = null;
+  let videoUrl: string | null = null;
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (line.startsWith('#EXT-X-MEDIA:') && line.includes('TYPE=AUDIO')) {
+      const m = /URI="([^"]+)"/.exec(line);
+      if (m) audioUrl = new URL(m[1]!, indexUrl).toString();
+    } else if (line.startsWith('#EXT-X-STREAM-INF:')) {
+      const next = lines[i + 1]?.trim();
+      if (next && !next.startsWith('#')) videoUrl = new URL(next, indexUrl).toString();
+    }
+  }
+  if (!videoUrl) throw new Error(`rendition ${r.path}: no video playlist in multivariant playlist`);
+  return { ...r, videoUrl, audioUrl };
+}
+
+/**
+ * Multivariant playlist that references the session-scoped media playlists of two separately
+ * published MediaMTX renditions. A single audio group (from the first rendition) is shared so a
+ * level switch only changes video.
+ */
+export function buildMasterPlaylist(renditions: ResolvedRendition[]): string {
   const first = renditions[0];
   if (!first) throw new Error('no renditions');
   const lines = ['#EXTM3U', '#EXT-X-VERSION:10', '#EXT-X-INDEPENDENT-SEGMENTS', ''];
-  lines.push(`#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="audio",AUTOSELECT=YES,DEFAULT=YES,URI="${hlsBase}/live/${first.path}/audio2_stream.m3u8"`, '');
+  if (first.audioUrl) lines.push(`#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="audio",AUTOSELECT=YES,DEFAULT=YES,URI="${first.audioUrl}"`, '');
   for (const r of renditions) {
-    lines.push(`#EXT-X-STREAM-INF:BANDWIDTH=${r.bandwidth},AVERAGE-BANDWIDTH=${Math.round(r.bandwidth * 0.95)},CODECS="${r.codecs}",RESOLUTION=${r.width}x${r.height},FRAME-RATE=30.000,AUDIO="audio"`);
-    lines.push(`${hlsBase}/live/${r.path}/video1_stream.m3u8`);
+    const audio = first.audioUrl ? ',AUDIO="audio"' : '';
+    lines.push(`#EXT-X-STREAM-INF:BANDWIDTH=${r.bandwidth},AVERAGE-BANDWIDTH=${Math.round(r.bandwidth * 0.95)},CODECS="${r.codecs}",RESOLUTION=${r.width}x${r.height},FRAME-RATE=30.000${audio}`);
+    lines.push(r.videoUrl);
   }
   return lines.join('\n') + '\n';
 }
