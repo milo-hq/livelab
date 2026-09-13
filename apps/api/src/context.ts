@@ -1,12 +1,15 @@
 import type { Config } from './config.js';
 import type { Db } from './db.js';
 import { RoomService } from './modules/rooms/service.js';
-import type { QoeSummary } from '@livelab/protocol';
+import type { QoeSummary, ServerMsg } from '@livelab/protocol';
 import { createHealthService, type HealthService } from './modules/rooms/health.js';
 import { createMemoryBus, createRedisBus, type Bus } from './modules/im/bus.js';
 import { createMemoryHistory, createRedisHistory, type History } from './modules/im/history.js';
 import { RoomHub } from './modules/im/hub.js';
 import { Moderation } from './modules/im/moderation.js';
+import { WalletService } from './modules/wallet/service.js';
+import { createTelemetrySink, type Sink } from './modules/telemetry/sink.js';
+import { createQoeSummary } from './modules/telemetry/summary.js';
 
 /** Shared services passed to route modules. Extended by later phases (hub, wallet, telemetry...). */
 export interface AppContext {
@@ -25,8 +28,13 @@ export interface AppContext {
   /** Fan-out bus (Redis when configured and reachable, else in-memory). */
   bus: Bus;
   history: History;
-  /** QoE summary for the admin overview; wired by the telemetry module when ClickHouse is configured. */
+  wallet: WalletService;
+  /** QoE event sink: ClickHouse when `cfg.clickhouseUrl` is set, otherwise a console sink. */
+  telemetry: Sink;
+  /** 15-minute QoE summary from ClickHouse; undefined when ClickHouse is not configured. */
   qoeSummary?: () => Promise<QoeSummary>;
+  /** Room broadcast hook used by REST modules (gifts) to push into the IM lanes. */
+  broadcast?: (room: string, msg: Omit<ServerMsg, 'seq' | 'ts'>) => Promise<ServerMsg | null>;
 }
 
 export interface ContextLogger { info: (msg: string) => void; warn: (msg: string) => void }
@@ -47,6 +55,10 @@ export async function createContext(cfg: Config, db: Db, log: ContextLogger = co
     health,
     bus,
     history,
+    wallet: new WalletService(db, cfg),
+    telemetry: createTelemetrySink(cfg),
+    qoeSummary: cfg.clickhouseUrl ? createQoeSummary({ url: cfg.clickhouseUrl, user: cfg.clickhouseUser, password: cfg.clickhousePassword }) : undefined,
+    broadcast: (room, msg) => hub.broadcast(room, msg),
   };
 }
 

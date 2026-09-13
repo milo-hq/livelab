@@ -11,6 +11,11 @@ import { healthRoutes } from './modules/rooms/health.js';
 import { imRoutes } from './modules/im/ws.js';
 import { interactionRoutes } from './modules/interaction/routes.js';
 import { adminRoutes } from './modules/admin/routes.js';
+import { walletRoutes } from './modules/wallet/routes.js';
+import { payMockRoutes } from './modules/pay-mock/routes.js';
+import { giftRoutes } from './modules/gifts/routes.js';
+import { telemetryRoutes } from './modules/telemetry/routes.js';
+import { weaknetRoutes } from './modules/weaknet/routes.js';
 
 export interface BuildOptions { cfg?: Partial<Config>; dbPath?: string; logger?: boolean }
 
@@ -43,10 +48,16 @@ export async function buildApp(opts: BuildOptions = {}) {
   await app.register(imRoutes, ctx);
   await app.register(interactionRoutes, ctx);
   await app.register(adminRoutes, ctx);
+  await app.register(walletRoutes, ctx);
+  await app.register(payMockRoutes, ctx);
+  await app.register(giftRoutes, ctx);
+  await app.register(telemetryRoutes, ctx);
+  await app.register(weaknetRoutes, ctx);
   // Prime the MediaMTX health cache so the first room list already reflects liveness (non-blocking).
   for (const r of ctx.rooms.list()) void ctx.health.get(r.streamPath);
   app.addHook('onClose', async () => { await ctx.hub.close(); await ctx.bus.close(); ctx.health.close(); });
 
+  app.addHook('onClose', async () => ctx.telemetry.close());
   app.addHook('onClose', async () => db.close());
   return app;
 }
