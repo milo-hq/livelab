@@ -10,7 +10,7 @@ import { ModerationPanel, useModAction } from '../components/host/moderation-pan
 import { PollPanel } from '../components/host/poll-panel';
 import { LoginDialog } from '../components/login-dialog';
 import { useRoomStore } from '../stores/room';
-import { PlayerSlot } from '../components/player/player-slot';
+import { LivePlayer } from '../components/player/live-player';
 
 export default function HostPage() {
   const { id = 'demo' } = useParams();
@@ -42,7 +42,7 @@ export default function HostPage() {
           <HealthCard roomId={id} />
         </div>
         <div className="aspect-video overflow-hidden rounded-lg bg-black">
-          <PlayerSlot roomId={id} muted />
+          <LivePlayer roomId={id} muted compact />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <ModerationPanel roomId={id} />

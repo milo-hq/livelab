@@ -14,7 +14,7 @@ import { GiftLayer } from '../components/gifts/gift-layer';
 import { GiftPanel } from '../components/gifts/gift-panel';
 import { RechargeDialog, WalletBadge } from '../components/wallet/wallet';
 import { LoginDialog } from '../components/login-dialog';
-import { PlayerSlot } from '../components/player/player-slot';
+import { LivePlayer } from '../components/player/live-player';
 
 function PollCard({ send }: { send: ReturnType<typeof useRoomConnection>['send'] }) {
   const poll = useRoomStore((s) => s.state.poll);
@@ -55,9 +55,10 @@ export default function RoomPage() {
     <div className="mx-auto flex h-full max-w-[1400px] flex-col gap-3 p-3 lg:flex-row">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
-          <PlayerSlot roomId={id} />
-          <DanmakuLayer density={density} />
-          <GiftLayer />
+          <LivePlayer roomId={id} muted={false}>
+            <DanmakuLayer density={density} />
+            <GiftLayer />
+          </LivePlayer>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
