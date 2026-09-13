@@ -1,0 +1,9 @@
+node_modules
+dist
+.turbo
+*.log
+.env
+.DS_Store
+apps/api/data/*.db
+test-results
+playwright-report
