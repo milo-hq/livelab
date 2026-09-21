@@ -15,17 +15,17 @@ export function Layout() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex h-12 shrink-0 items-center gap-6 border-b border-zinc-800 px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold">
+        <Link to="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold">
           <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-brand" /> LiveLab
         </Link>
-        <nav className="flex gap-4 text-sm text-zinc-400">
+        <nav className="hidden gap-4 whitespace-nowrap text-sm text-zinc-400 sm:flex">
           {nav.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => (isActive ? 'text-zinc-100' : 'hover:text-zinc-200')}>
               {n.label}
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-3 text-sm">
+        <div className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap text-sm">
           {user ? (
             <>
               <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">{user.role}</span>

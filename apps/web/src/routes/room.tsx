@@ -67,7 +67,7 @@ export default function RoomPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-semibold">{room.data?.title ?? id}</h1>
-            <div className="text-xs text-zinc-400">{room.data?.hostName} · {online} 在线 · {room.data?.mode === 'interactive' ? 'WebRTC 互动' : 'LL-HLS'}</div>
+            <div className="truncate whitespace-nowrap text-xs text-zinc-400">{room.data?.hostName} · {online} 在线 · {room.data?.mode === 'interactive' ? 'WebRTC 互动' : 'LL-HLS'}</div>
           </div>
           <select value={density} onChange={(e) => setDensity(e.target.value as DanmakuDensity)} className="rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs">
             <option value="off">弹幕关</option><option value="low">弹幕少</option><option value="normal">弹幕中</option><option value="high">弹幕多</option>
